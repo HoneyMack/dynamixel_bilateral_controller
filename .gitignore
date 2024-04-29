@@ -1,3 +1,6 @@
+# build以下のファイルを無視
+build/
+
 # Prerequisites
 *.d
 
