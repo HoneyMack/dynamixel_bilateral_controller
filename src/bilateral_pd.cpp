@@ -28,7 +28,10 @@ using namespace std;
 
 // Control table address
 #define ADDR_TORQUE_ENABLE          64
+#define ADDR_GOAL_CURRENT           102
+#define LEN_GOAL_CURRENT            2
 #define ADDR_GOAL_POSITION          116
+#define LEN_GOAL_POSITION           4
 #define ADDR_PRESENT_CURRENT        126 // 1 [mA]
 #define LEN_PRESENT_CURRENT         2
 #define ADDR_PRESENT_VELOCITY       128 // 0.229 [rev/min]
@@ -56,6 +59,9 @@ using namespace std;
 #define DXL_MOVING_STATUS_THRESHOLD     20  // DYNAMIXEL moving status threshold
 #define ESC_ASCII_VALUE                 0x1b
 
+
+const double KP = 0.1;
+const double KD = 1e-8;
 
 int getch() {
     struct termios oldt, newt;
@@ -105,12 +111,12 @@ int main() {
     uint8_t dxl_error = 0;                          // Dynamixel error
     uint8_t param_goal_current[LEN_PRESENT_CURRENT];
 
+    map<int8_t, int16_t> dxl_goal_currents;
     map<int8_t, int32_t> dxl_present_currents;
     map<int8_t, int32_t> dxl_present_velocities;
     map<int8_t, int32_t> dxl_present_positions;
 
     vector<pair<int, int>> read_params = { {ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT}, {ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY}, {ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION} };
-    // vector<pair<int, int>> read_params = { {ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT}};
     vector<map<int8_t, int32_t>*> read_values = { &dxl_present_currents, &dxl_present_velocities, &dxl_present_positions };
 
     // Initialize PortHandler instance
@@ -218,10 +224,40 @@ int main() {
             printf("[ID:%03d] Present Current: %d mA, Present Velocity: %d rpm, Present Position: %d\n", dxl_id, dxl_present_currents[dxl_id], dxl_present_velocities[dxl_id], dxl_present_positions[dxl_id]);
         }
 
-        // usleep(10000); // Sleep for 0.01 seconds
-        printf("Press any key to continue! (or press ESC to quit!)\n");
-        if (getch() == ESC_ASCII_VALUE)
-            break;
+        // フィードバック制御
+        // 目標電流値を設定
+
+
+        dxl_goal_currents[DXL_ID_LEADER] = KP * (dxl_present_positions[DXL_ID_FOLLOWER] - dxl_present_positions[DXL_ID_LEADER]) + KD * (dxl_present_velocities[DXL_ID_FOLLOWER] - dxl_present_velocities[DXL_ID_LEADER]);
+        dxl_goal_currents[DXL_ID_FOLLOWER] = KP * (dxl_present_positions[DXL_ID_LEADER] - dxl_present_positions[DXL_ID_FOLLOWER]) + KD * (dxl_present_velocities[DXL_ID_LEADER] - dxl_present_velocities[DXL_ID_FOLLOWER]);
+        
+        //パラメータを追加
+        for(auto dxl_id:dxl_ids){
+            param_goal_current[0] = DXL_LOBYTE((dxl_goal_currents[dxl_id]));
+            param_goal_current[1] = DXL_HIBYTE((dxl_goal_currents[dxl_id]));
+
+            dxl_addparam_result = groupBulkWrite.addParam(dxl_id, ADDR_GOAL_CURRENT, LEN_GOAL_CURRENT, param_goal_current);
+            if (dxl_addparam_result != true) {
+                fprintf(stderr, "[ID:%03d] groupBulkWrite addparam failed\n", dxl_id);
+                return 0;
+            }
+        }
+        // write goal current
+        dxl_comm_result = groupBulkWrite.txPacket();
+        if (dxl_comm_result != COMM_SUCCESS) {
+            printf("%s\n", packetHandler->getTxRxResult(dxl_comm_result));
+        }
+
+        // Clear bulkwrite parameter storage
+        groupBulkWrite.clearParam();
+
+        usleep(10000); // Sleep for 0.01 seconds
+        //usleep(1000000); // Sleep for 0.1 seconds
+
+
+        // printf("Press any key to continue! (or press ESC to quit!)\n");
+        // if (getch() == ESC_ASCII_VALUE)
+        //     break;
     }
 
     // Disable DYNAMIXEL Torque
