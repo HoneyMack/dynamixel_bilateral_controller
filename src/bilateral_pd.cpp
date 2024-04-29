@@ -166,13 +166,13 @@ int main() {
     }
 
     // Add parameter storage for Dynamixels present current,velocity and position
-    groupBulkReads.emplace_back(portHandler, packetHandler);
-    groupBulkReads.emplace_back(portHandler, packetHandler);
-    groupBulkReads.emplace_back(portHandler, packetHandler);
+    // TODO: なぜかemplace_backを下のfor文の中で使うとエラーが出るので別々にしている．要原因調査
+    for(int rparam_idx = 0; rparam_idx < read_params.size(); rparam_idx++){
+        groupBulkReads.emplace_back(portHandler, packetHandler);
+    }
 
     for (int rparam_idx = 0; rparam_idx < read_params.size();rparam_idx++){
-        //groupBulkReads.emplace_back(portHandler, packetHandler);
-        auto [addr, len] = read_params[rparam_idx];
+        const auto [addr, len] = read_params[rparam_idx];
 
         for (const auto dxl_id : dxl_ids) {
             bool dxl_addparam_result = groupBulkReads[rparam_idx].addParam(dxl_id, addr, len);
@@ -185,25 +185,6 @@ int main() {
             }
         }
     }
-
-
-    
-
-
-    // for (const auto [addr, len] : read_params) {
-    //     dynamixel::GroupBulkRead groupBulkRead(portHandler, packetHandler);
-    //     for (const auto dxl_id : dxl_ids) {
-    //         bool dxl_addparam_result = groupBulkRead.addParam(dxl_id, addr, len);
-    //         if (!dxl_addparam_result) {
-    //             fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
-    //             return 0;
-    //         }
-    //         else {
-    //             printf("[ID:%03d] groupBulkRead addparam success\n", dxl_id);
-    //         }
-    //     }
-    //     groupBulkReads.push_back(&groupBulkRead);
-    // }
 
     while (1) {
         // 現在の状態を取得
@@ -218,6 +199,7 @@ int main() {
         }
         //// 受信データを取得 
         for (int rparam_idx = 0; rparam_idx < read_params.size(); rparam_idx++) {
+            // TODO: エラー処理を追加
             for (auto&& dxl_id : dxl_ids) {
                 auto& [addr, len] = read_params[rparam_idx];
                 auto val = read_values[rparam_idx];
@@ -230,22 +212,6 @@ int main() {
                 (*val)[dxl_id] = groupBulkReads[rparam_idx].getData(dxl_id, addr, len);
             }
         }
-
-        // for (auto&& dxl_id : dxl_ids) {
-        //     // TODO: エラー処理を追加
-
-        //     for (int i = 0; i < read_params.size(); i++) {
-        //         auto& [addr, len] = read_params[i];
-        //         auto val = read_values[i];
-
-        //         dxl_getdata_result = groupBulkRead.isAvailable(dxl_id, addr, len);
-        //         if (dxl_getdata_result != true) {
-        //             fprintf(stderr, "[ID:%03d] groupBulkRead getdata failed\n", dxl_id);
-        //             return 0;
-        //         }
-        //         (*val)[dxl_id] = groupBulkRead.getData(dxl_id, addr, len);
-        //     }
-        // }
 
         // 現在の情報を表示
         for (auto&& dxl_id : dxl_ids) {
