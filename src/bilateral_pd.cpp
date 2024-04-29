@@ -196,7 +196,6 @@ int main() {
         // 現在の状態を取得
         //// 受信できたか確認
         for (int rparam_idx = 0; rparam_idx < read_params.size(); rparam_idx++) {
-            printf("Succeeded to get present position\n");
             dxl_comm_result = groupBulkReads[rparam_idx].txRxPacket();
             if (dxl_comm_result != COMM_SUCCESS) {
                 printf("%s\n", packetHandler->getTxRxResult(dxl_comm_result));
@@ -251,7 +250,7 @@ int main() {
         // Clear bulkwrite parameter storage
         groupBulkWrite.clearParam();
 
-        usleep(10000); // Sleep for 0.01 seconds
+        usleep(2000); // Sleep for 0.002 seconds
         //usleep(1000000); // Sleep for 0.1 seconds
 
 
