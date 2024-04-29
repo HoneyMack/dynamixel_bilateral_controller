@@ -17,7 +17,7 @@
 #include <initializer_list>
 
 
-#include "dynamixel_sdk.h"  // Uses DYNAMIXEL SDK library
+#include <dynamixel_sdk/dynamixel_sdk.h> // Uses DYNAMIXEL SDK library
 #include <unistd.h>
 
 using namespace std;
@@ -250,7 +250,7 @@ int main() {
         // Clear bulkwrite parameter storage
         groupBulkWrite.clearParam();
 
-        usleep(2000); // Sleep for 0.002 seconds
+        usleep(2000); // Sleep for 0.002 seconds == 500Hz
         //usleep(1000000); // Sleep for 0.1 seconds
 
 
