@@ -53,6 +53,12 @@ void DXLHandler::setup()
 
 void DXLHandler::shutdown()
 {
+    // 目標値電流を0にする
+    map<int,double> currents;
+    for(const int dxl_id : this->dxl_ids)
+        currents[dxl_id] = 0;
+    setCurrents(currents);
+
     // 必ずトルクをオフにする
     for(const int dxl_id : this->dxl_ids)
         setTorqueEnable(dxl_id, false);
