@@ -10,6 +10,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin) # 実行ファイル
 
 option(BUILD_TESTS "Build tests" ON)
 
+set(dynamixelSDK_LIBS /usr/local/lib/libdxl_x64_cpp.so)
+set(dynamixelSDK_HEADERS /usr/local/include/dynamixel_sdk)
 
 
 find_package(Boost REQUIRED
@@ -35,6 +37,11 @@ else(OpenCV_FOUND)
 endif()
 
 
+
+
+add_executable(bilateral_pd src/bilateral_pd.cpp)
+target_include_directories(bilateral_pd PUBLIC include ${dynamixelSDK_HEADERS})
+target_link_libraries(bilateral_pd ${dynamixelSDK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 # set(cmake_training_SRC
 #   src/my_class.cpp
