@@ -13,6 +13,9 @@ using namespace std;
 class DXLHandler
 {
     public:
+        vector<int> dxl_ids;
+
+        
         DXLHandler(dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler);
         ~DXLHandler();
 
@@ -32,7 +35,6 @@ class DXLHandler
         dynamixel::GroupSyncRead *currentSyncRead, *positionSyncRead, *velocitySyncRead;
         dynamixel::GroupSyncWrite *currentSyncWrite;
 
-        vector<int> dxl_ids;
 
         bool checkError(int dxl_comm_result, uint8_t dxl_error, int id);
 };

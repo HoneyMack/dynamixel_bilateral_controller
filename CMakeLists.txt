@@ -36,24 +36,23 @@ else(OpenCV_FOUND)
   message(WARNING "OpenCV not found")
 endif()
 
+set(my_dynamixel_SRC
+  src/dxl_handler.cpp
+)
+
+set(my_dynamixel_HEADERS
+  include/dxl_handler.hpp
+  include/dxl_const.hpp
+)
 
 
+add_executable(bilateral_pdt src/bilateral_pdt.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
+target_include_directories(bilateral_pdt PUBLIC include ${dynamixelSDK_HEADERS})
+target_link_libraries(bilateral_pdt ${dynamixelSDK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
-add_executable(bilateral_pd src/bilateral_pd.cpp)
+add_executable(bilateral_pd src/bilateral_pd.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
 target_include_directories(bilateral_pd PUBLIC include ${dynamixelSDK_HEADERS})
 target_link_libraries(bilateral_pd ${dynamixelSDK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES})
-
-# set(cmake_training_SRC
-#   src/my_class.cpp
-#   src/my_main.cpp
-# )
-
-# set(cmake_training_HEADERS
-#   include/cmake_training/my_class.h
-# )
-
-# add_executable(main ${cmake_training_SRC} ${cmake_training_HEADERS})
-# target_include_directories(main PUBLIC include/cmake_training)
 
 
 # test用のプログラムのコンパイル

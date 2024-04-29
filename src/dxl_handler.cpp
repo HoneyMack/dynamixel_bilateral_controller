@@ -11,7 +11,7 @@ DXLHandler::DXLHandler(dynamixel::PortHandler *portHandler, dynamixel::PacketHan
 
 DXLHandler::~DXLHandler()
 {
-    shutdown();
+    //shutdown();
     delete currentSyncRead, positionSyncRead, velocitySyncRead;
     delete currentSyncWrite;
 }
@@ -29,6 +29,26 @@ void DXLHandler::setup()
     // サーボのトルクをオンにする
     for(const int dxl_id : this->dxl_ids)
         setTorqueEnable(dxl_id, true);
+
+    // パラメータを追加
+    for(const int dxl_id : this->dxl_ids)
+    {
+        int dxl_comm_result = currentSyncRead->addParam(dxl_id);
+        if (dxl_comm_result != true)
+        {
+            fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
+        }
+        dxl_comm_result = positionSyncRead->addParam(dxl_id);
+        if (dxl_comm_result != true)
+        {
+            fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
+        }
+        dxl_comm_result = velocitySyncRead->addParam(dxl_id);
+        if (dxl_comm_result != true)
+        {
+            fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
+        }
+    }
 }
 
 void DXLHandler::shutdown()
@@ -68,20 +88,21 @@ void DXLHandler::setTorqueEnable(int id, bool enable)
 /// @param currents 電流値[mA]
 void DXLHandler::setCurrents(map<int,double> currents)
 {
-    for(int i = 0; i < this->dxl_ids.size(); i++)
-    {
-        int dxl_id = this->dxl_ids[i];
+    uint8_t param_goal_current[2];
+    for(auto dxl_id : dxl_ids){
         int dxl_comm_result = COMM_TX_FAIL;
         uint8_t dxl_error = 0;
 
-        int current = (int16_t)(currents[i]/UNIT_CURRENT);
-        dxl_comm_result = currentSyncWrite->addParam(dxl_id, (uint8_t*)&current);
+        int16_t current = (int16_t)(currents[dxl_id]/UNIT_CURRENT);
+        param_goal_current[0] = DXL_LOBYTE(current);
+        param_goal_current[1] = DXL_HIBYTE(current);
+        
+        dxl_comm_result = currentSyncWrite->addParam(dxl_id, param_goal_current);
         if (dxl_comm_result != COMM_SUCCESS)
         {
             fprintf(stderr, "%s\n", packetHandler->getTxRxResult(dxl_comm_result));
         }
     }
-
     currentSyncWrite->txPacket();
     currentSyncWrite->clearParam();
 }
@@ -158,15 +179,15 @@ bool DXLHandler::checkError(int dxl_comm_result, uint8_t dxl_error, int id)
     if (dxl_comm_result != COMM_SUCCESS)
     {
         fprintf(stderr, "%s\n", packetHandler->getTxRxResult(dxl_comm_result));
-        return false;
+        return true;
     }
     else if (dxl_error != 0)
     {
         fprintf(stderr, "%s\n", packetHandler->getRxPacketError(dxl_error));
-        return false;
+        return true;
     }
     else
     {
-        return true;
+        return false;
     }
 }

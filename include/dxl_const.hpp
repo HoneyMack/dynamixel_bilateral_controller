@@ -23,4 +23,8 @@
 #define UNIT_POSITION               0.088 // [deg/pulse]
 
 
+// DYNAMIXEL Protocol Version (1.0 / 2.0)
+// https://emanual.robotis.com/docs/en/dxl/protocol2/
+#define PROTOCOL_VERSION  2.0
+
 #endif
