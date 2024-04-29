@@ -127,7 +127,7 @@ int main() {
     dynamixel::GroupBulkWrite groupBulkWrite(portHandler, packetHandler);
 
     // Create GroupBulkRead instances for each read parameter
-    vector<dynamixel::GroupBulkRead*> groupBulkReads;
+    vector<dynamixel::GroupBulkRead> groupBulkReads;
 
     // Open port
     if (portHandler->openPort()) {
@@ -166,27 +166,16 @@ int main() {
     }
 
     // Add parameter storage for Dynamixels present current,velocity and position
-    // for (int rparam_idx = 0; rparam_idx < read_params.size();rparam_idx++){
-    //     auto [addr, len] = read_params[rparam_idx];
+    groupBulkReads.emplace_back(portHandler, packetHandler);
+    groupBulkReads.emplace_back(portHandler, packetHandler);
+    groupBulkReads.emplace_back(portHandler, packetHandler);
 
-    //     groupBulkReads.emplace_back(portHandler, packetHandler);
-    //     for (const auto dxl_id : dxl_ids) {
-    //         bool dxl_addparam_result = groupBulkReads[rparam_idx].addParam(dxl_id, addr, len);
-    //         if (!dxl_addparam_result) {
-    //             fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
-    //             return 0;
-    //         }
-    //         else {
-    //             printf("[ID:%03d] groupBulkRead addparam success\n", dxl_id);
-    //         }
-    //     }
-    // }
+    for (int rparam_idx = 0; rparam_idx < read_params.size();rparam_idx++){
+        //groupBulkReads.emplace_back(portHandler, packetHandler);
+        auto [addr, len] = read_params[rparam_idx];
 
-
-    for (const auto [addr, len] : read_params) {
-        dynamixel::GroupBulkRead groupBulkRead(portHandler, packetHandler);
         for (const auto dxl_id : dxl_ids) {
-            bool dxl_addparam_result = groupBulkRead.addParam(dxl_id, addr, len);
+            bool dxl_addparam_result = groupBulkReads[rparam_idx].addParam(dxl_id, addr, len);
             if (!dxl_addparam_result) {
                 fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
                 return 0;
@@ -195,15 +184,33 @@ int main() {
                 printf("[ID:%03d] groupBulkRead addparam success\n", dxl_id);
             }
         }
-        groupBulkReads.push_back(&groupBulkRead);
     }
+
+
+    
+
+
+    // for (const auto [addr, len] : read_params) {
+    //     dynamixel::GroupBulkRead groupBulkRead(portHandler, packetHandler);
+    //     for (const auto dxl_id : dxl_ids) {
+    //         bool dxl_addparam_result = groupBulkRead.addParam(dxl_id, addr, len);
+    //         if (!dxl_addparam_result) {
+    //             fprintf(stderr, "[ID:%03d] groupBulkRead addparam failed\n", dxl_id);
+    //             return 0;
+    //         }
+    //         else {
+    //             printf("[ID:%03d] groupBulkRead addparam success\n", dxl_id);
+    //         }
+    //     }
+    //     groupBulkReads.push_back(&groupBulkRead);
+    // }
 
     while (1) {
         // 現在の状態を取得
         //// 受信できたか確認
         for (int rparam_idx = 0; rparam_idx < read_params.size(); rparam_idx++) {
             printf("Succeeded to get present position\n");
-            dxl_comm_result = groupBulkReads[rparam_idx]->txRxPacket();
+            dxl_comm_result = groupBulkReads[rparam_idx].txRxPacket();
             if (dxl_comm_result != COMM_SUCCESS) {
                 printf("%s\n", packetHandler->getTxRxResult(dxl_comm_result));
                 break;
@@ -215,12 +222,12 @@ int main() {
                 auto& [addr, len] = read_params[rparam_idx];
                 auto val = read_values[rparam_idx];
 
-                dxl_getdata_result = groupBulkReads[rparam_idx]->isAvailable(dxl_id, addr, len);
+                dxl_getdata_result = groupBulkReads[rparam_idx].isAvailable(dxl_id, addr, len);
                 if (dxl_getdata_result != true) {
                     fprintf(stderr, "[ID:%03d] groupBulkRead getdata failed\n", dxl_id);
                     return 0;
                 }
-                (*val)[dxl_id] = groupBulkReads[rparam_idx]->getData(dxl_id, addr, len);
+                (*val)[dxl_id] = groupBulkReads[rparam_idx].getData(dxl_id, addr, len);
             }
         }
 
