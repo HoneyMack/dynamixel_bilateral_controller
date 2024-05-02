@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin) # 実行ファイルの出力先
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread") # pthreadを使うためのオプション
 
 option(BUILD_TESTS "Build tests" ON)
 
@@ -37,12 +38,12 @@ else(OpenCV_FOUND)
 endif()
 
 set(my_dynamixel_SRC
-  src/dxl_handler.cpp
+  ${PROJECT_SOURCE_DIR}/src/dxl_handler.cpp
 )
 
 set(my_dynamixel_HEADERS
-  include/dxl_handler.hpp
-  include/dxl_const.hpp
+  ${PROJECT_SOURCE_DIR}/include/dxl_handler.hpp
+  ${PROJECT_SOURCE_DIR}/include/dxl_const.hpp
 )
 
 
