@@ -32,7 +32,6 @@ using namespace std;
 // SERVO_ID
 #define DXL_ID_LEADER 1
 #define DXL_ID_FOLLOWER 2
-#define BAUDRATE                    57600
 #define DEVICENAME  "/dev/ttyUSB0"
 
 
@@ -85,7 +84,7 @@ int main() {
         getch();
         return 0;
     }
-    
+
     DXLHandler dxlHandler(portHandler, packetHandler);
     dxlHandler.addServo(DXL_ID_LEADER);
     dxlHandler.addServo(DXL_ID_FOLLOWER);
@@ -93,14 +92,14 @@ int main() {
 
     int dxl_comm_result = COMM_TX_FAIL;             // Communication result
 
-    while(1){
+    while (1) {
         // 現在の状態を取得
         auto currents = dxlHandler.getCurrents();
         auto positions = dxlHandler.getPositions();
         auto velocities = dxlHandler.getVelocities();
 
         // 現在の状態を表示
-        for(const auto& id : dxlHandler.dxl_ids){
+        for (const auto& id : dxlHandler.dxl_ids) {
             printf("ID: %d, Current: %f mA, Velocity: %f, Position: %f \n", id, currents[id], velocities[id], positions[id]);
         }
 
@@ -109,10 +108,10 @@ int main() {
         double pos_l = positions[DXL_ID_LEADER];
         double vel_f = velocities[DXL_ID_FOLLOWER];
         double vel_l = velocities[DXL_ID_LEADER];
-        double goal_current_l = KP*(pos_f - pos_l) + KD*(vel_f - vel_l);
-        double goal_current_f = KP*(pos_l - pos_f) + KD*(vel_l - vel_f);
+        double goal_current_l = KP * (pos_f - pos_l) + KD * (vel_f - vel_l);
+        double goal_current_f = KP * (pos_l - pos_f) + KD * (vel_l - vel_f);
 
-        map<int,double> goal_currents = {
+        map<int, double> goal_currents = {
             {DXL_ID_LEADER, goal_current_l},
             {DXL_ID_FOLLOWER, goal_current_f}
         };

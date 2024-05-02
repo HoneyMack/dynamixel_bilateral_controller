@@ -26,5 +26,6 @@
 // DYNAMIXEL Protocol Version (1.0 / 2.0)
 // https://emanual.robotis.com/docs/en/dxl/protocol2/
 #define PROTOCOL_VERSION  2.0
+#define BAUDRATE 1000000 // 1Mbps
 
 #endif
