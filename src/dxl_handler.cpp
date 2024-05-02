@@ -3,10 +3,10 @@
 #include "dxl_handler.hpp"
 #include "dxl_const.hpp"
 
-DXLHandler::DXLHandler(dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler)
+DXLHandler::DXLHandler(const char* device_name)
 {
-    this->portHandler = portHandler;
-    this->packetHandler = packetHandler;
+    this->portHandler =  dynamixel::PortHandler::getPortHandler(device_name);
+    this->packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 }
 
 DXLHandler::~DXLHandler()
@@ -25,6 +25,26 @@ void DXLHandler::setup()
     velocitySyncRead = new dynamixel::GroupSyncRead(portHandler, packetHandler, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY);
 
     currentSyncWrite = new dynamixel::GroupSyncWrite(portHandler, packetHandler, ADDR_GOAL_CURRENT, LEN_GOAL_CURRENT);
+
+    // Open port
+    if (portHandler->openPort()) {
+        printf("Succeeded to open the port!\n");
+    }
+    else {
+        printf("Failed to open the port!\n");
+        return;
+    }
+
+    // Set port baudrate
+    if (portHandler->setBaudRate(BAUDRATE)) {
+        printf("Succeeded to change the baudrate!\n");
+    }
+    else {
+        printf("Failed to change the baudrate!\n");
+        printf("Press any key to terminate...\n");
+        return;
+    }
+
 
     // サーボのトルクをオンにする
     for(const int dxl_id : this->dxl_ids)
@@ -62,6 +82,9 @@ void DXLHandler::shutdown()
     // 必ずトルクをオフにする
     for(const int dxl_id : this->dxl_ids)
         setTorqueEnable(dxl_id, false);
+
+    // Close port
+    portHandler->closePort();
 }
 
 void DXLHandler::addServo(int id)

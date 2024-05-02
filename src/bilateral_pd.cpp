@@ -53,39 +53,7 @@ int getch() {
 
 
 int main() {
-    // Initialize PortHandler instance
-    // Set the port path
-    // Get methods and members of PortHandlerLinux or PortHandlerWindows
-    dynamixel::PortHandler* portHandler = dynamixel::PortHandler::getPortHandler(DEVICENAME);
-
-    // Initialize PacketHandler instance
-    // Set the protocol version
-    // Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
-    dynamixel::PacketHandler* packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
-
-    // Open port
-    if (portHandler->openPort()) {
-        printf("Succeeded to open the port!\n");
-    }
-    else {
-        printf("Failed to open the port!\n");
-        printf("Press any key to terminate...\n");
-        getch();
-        return 0;
-    }
-
-    // Set port baudrate
-    if (portHandler->setBaudRate(BAUDRATE)) {
-        printf("Succeeded to change the baudrate!\n");
-    }
-    else {
-        printf("Failed to change the baudrate!\n");
-        printf("Press any key to terminate...\n");
-        getch();
-        return 0;
-    }
-
-    DXLHandler dxlHandler(portHandler, packetHandler);
+    DXLHandler dxlHandler(DEVICENAME);
     dxlHandler.addServo(DXL_ID_LEADER);
     dxlHandler.addServo(DXL_ID_FOLLOWER);
     dxlHandler.setup();
@@ -120,9 +88,8 @@ int main() {
         usleep(2000); // Sleep for 0.002 seconds == 500Hz
     }
 
-    // Close port
+
     dxlHandler.shutdown();
-    portHandler->closePort();
 
     return 0;
 }

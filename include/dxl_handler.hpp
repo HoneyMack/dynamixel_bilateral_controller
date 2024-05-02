@@ -16,7 +16,7 @@ class DXLHandler
         vector<int> dxl_ids;
 
         
-        DXLHandler(dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler);
+        DXLHandler(const char* device_name);
         ~DXLHandler();
 
         void setup();
