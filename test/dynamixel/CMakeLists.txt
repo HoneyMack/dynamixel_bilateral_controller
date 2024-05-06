@@ -12,3 +12,11 @@ target_link_libraries(read_write ${dynamixelSDK_LIBS})
 add_executable(control_regular_interval control_regular_interval.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
 target_include_directories(control_regular_interval PUBLIC ${PROJECT_SOURCE_DIR}/include ${dynamixelSDK_HEADERS} )
 target_link_libraries(control_regular_interval ${dynamixelSDK_LIBS} )
+
+add_executable(identify_system identify_system.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
+target_include_directories(identify_system PUBLIC ${PROJECT_SOURCE_DIR}/include ${dynamixelSDK_HEADERS} )
+target_link_libraries(identify_system ${dynamixelSDK_LIBS} )
+
+add_executable(measure_bulk_rw measure_bulk_rw.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
+target_include_directories(measure_bulk_rw PUBLIC ${PROJECT_SOURCE_DIR}/include ${dynamixelSDK_HEADERS} )
+target_link_libraries(measure_bulk_rw ${dynamixelSDK_LIBS} )
