@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin) # 実行ファイルの出力先
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread") # pthreadを使うためのオプション
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
 
 option(BUILD_TESTS "Build tests" ON)
 
