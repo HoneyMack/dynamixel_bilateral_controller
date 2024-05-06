@@ -32,7 +32,7 @@ class DXLHandler
     private:
         dynamixel::PortHandler *portHandler;
         dynamixel::PacketHandler *packetHandler;
-        dynamixel::GroupSyncRead *currentSyncRead, *positionSyncRead, *velocitySyncRead;
+        dynamixel::GroupFastSyncRead *currentSyncRead, *positionSyncRead, *velocitySyncRead;
         dynamixel::GroupSyncWrite *currentSyncWrite;
 
 
