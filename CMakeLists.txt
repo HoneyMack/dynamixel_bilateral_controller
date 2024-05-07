@@ -46,6 +46,8 @@ set(my_dynamixel_SRC
 set(my_dynamixel_HEADERS
   ${PROJECT_SOURCE_DIR}/include/dxl_handler.hpp
   ${PROJECT_SOURCE_DIR}/include/dxl_const.hpp
+  ${PROJECT_SOURCE_DIR}/include/filters.hpp
+  ${PROJECT_SOURCE_DIR}/include/observers.hpp
 )
 
 

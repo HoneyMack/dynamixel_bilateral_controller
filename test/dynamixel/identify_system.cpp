@@ -36,7 +36,7 @@ using namespace std;
 
 // SERVO_ID
 #define DXL_ID 1
-#define DEVICENAME  "/dev/ttyUSB0"
+#define DEVICENAME  "/dev/ttyUSB1"
 
 
 const double KP = 1.0;
@@ -69,9 +69,9 @@ int main() {
     atomic<bool> isThreadFinished(false);
 
     // 入力値の設定    
-    // vector<double> cur_refs = { 50.0, 60.0, 70.0, 80.0, 90.0, 100.0 };
+    vector<double> cur_refs = {80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0};
     int num_samples = 3000;
-    vector<double> cur_refs = { 70.0, 100.0, 150, 200};
+    // vector<double> cur_refs = { 70.0, 100.0, 150, 200};
     // 出力データの保存先
     vector<vector<tuple<double, double, double, double>>> data; // 時刻[s]，電流[ms]，位置[deg]，速度[rpm]
 
@@ -136,7 +136,7 @@ int main() {
         FILE* fp;
         string filename = "data" + to_string(i) + ".csv";
         fp=fopen(filename.c_str(), "w");
-        fprintf(fp, "time, current, position, velocity\n");
+        fprintf(fp, "time,current,position,velocity\n");
         for (const auto& d : data[i]) {
             fprintf(fp, "%f, %f, %f, %f\n", get<0>(d), get<1>(d), get<2>(d), get<3>(d));
         }
