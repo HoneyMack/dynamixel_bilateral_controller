@@ -35,8 +35,8 @@ using namespace std;
 
 
 const double KP = 4.0;//1.0;
-const double KD = 1e-8;
-const double KT = 5.2;
+const double KD = 1e-3;
+const double KT = 1.0;
 
 
 int getch() {
