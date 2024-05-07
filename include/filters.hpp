@@ -8,7 +8,6 @@ private:
     double y;  // filtered output
     double a;  // filter coefficient
 
-
 public:
     double g; //カットオフ角周波数
     // Constructor
