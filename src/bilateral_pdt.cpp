@@ -34,7 +34,7 @@ using namespace std;
 #define DEVICENAME  "/dev/ttyUSB1"
 
 
-const double KP = 1.0;//1.0;
+const double KP = 3.0;//1.0;
 const double KD = 1e-8;
 const double KT = 0.3;
 
@@ -66,8 +66,8 @@ int main() {
     //疑似微分器
     double T_control = 1.0/ 333;
     double cutoff_diff = 20; //10Hz
-    double cutoff_disturbance = 40; //10Hz
-    double cutoff_reaction = 40; //10Hz
+    double cutoff_disturbance = 2.5; //10Hz
+    double cutoff_reaction = 2.5; //10Hz
 
     FilterdDifferentiator Leader_filter(cutoff_diff, T_control);
     FilterdDifferentiator Follower_filter(cutoff_diff, T_control);
@@ -88,7 +88,7 @@ int main() {
             kv.second *= 6;
         }
 
-        //角速度を疑似微分により求める
+        //角速度を疑似微分により求める場合
         double vel_leader = Leader_filter.filter(positions[DXL_ID_LEADER]);
         double vel_follower = Follower_filter.filter(positions[DXL_ID_FOLLOWER]);
         // map<int, double> velocities = {
