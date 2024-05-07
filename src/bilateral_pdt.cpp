@@ -34,9 +34,9 @@ using namespace std;
 #define DEVICENAME  "/dev/ttyUSB1"
 
 
-const double KP = 3.0;//1.0;
+const double KP = 4.0;//1.0;
 const double KD = 1e-8;
-const double KT = 0.3;
+const double KT = 5.2;
 
 
 int getch() {
@@ -64,7 +64,7 @@ int main() {
     double J=0.01038306503027827, D=0.06542060735147959;
 
     //疑似微分器
-    double T_control = 1.0/ 333;
+    double T_control = 1.0/ 500;
     double cutoff_diff = 20; //10Hz
     double cutoff_disturbance = 2.5; //10Hz
     double cutoff_reaction = 2.5; //10Hz
@@ -78,9 +78,14 @@ int main() {
     RFOB rfob_l(J, D, cutoff_reaction, T_control);
     RFOB rfob_f(J, D, cutoff_reaction, T_control);
 
+    map<int,double> goal_currents = {
+        {DXL_ID_LEADER, 0},
+        {DXL_ID_FOLLOWER, 0}
+    };
+
     while (1) {
         // 現在の状態を取得
-        auto currents = dxlHandler.getCurrents();
+        // auto currents = dxlHandler.getCurrents();
         auto positions = dxlHandler.getPositions();
         auto velocities = dxlHandler.getVelocities();
         //rpm -> deg/s
@@ -88,9 +93,9 @@ int main() {
             kv.second *= 6;
         }
 
-        //角速度を疑似微分により求める場合
-        double vel_leader = Leader_filter.filter(positions[DXL_ID_LEADER]);
-        double vel_follower = Follower_filter.filter(positions[DXL_ID_FOLLOWER]);
+        // // 角速度を疑似微分により求める場合
+        // double vel_leader = Leader_filter.filter(positions[DXL_ID_LEADER]);
+        // double vel_follower = Follower_filter.filter(positions[DXL_ID_FOLLOWER]);
         // map<int, double> velocities = {
         //     {DXL_ID_LEADER, vel_leader},
         //     {DXL_ID_FOLLOWER, vel_follower}
@@ -108,27 +113,36 @@ int main() {
         double vel_f = velocities[DXL_ID_FOLLOWER];
         double vel_l = velocities[DXL_ID_LEADER];
         //外乱・反力を計算
-        double tau_d_l = dob_l.step(currents[DXL_ID_LEADER], vel_l);
-        double tau_d_f = dob_f.step(currents[DXL_ID_FOLLOWER], vel_f);
-        double tau_r_l = rfob_l.step(currents[DXL_ID_LEADER], vel_l, tau_d_l);
-        double tau_r_f = rfob_f.step(currents[DXL_ID_FOLLOWER], vel_f, tau_d_f);
+        // double tau_d_l = dob_l.step(currents[DXL_ID_LEADER], vel_l);
+        // double tau_d_f = dob_f.step(currents[DXL_ID_FOLLOWER], vel_f);
+        // double tau_r_l = rfob_l.step(currents[DXL_ID_LEADER], vel_l, tau_d_l);
+        // double tau_r_f = rfob_f.step(currents[DXL_ID_FOLLOWER], vel_f, tau_d_f);
+
+        double tau_d_l = dob_l.step(goal_currents[DXL_ID_LEADER], vel_l);
+        double tau_d_f = dob_f.step(goal_currents[DXL_ID_FOLLOWER], vel_f);
+        double tau_r_l = rfob_l.step(goal_currents[DXL_ID_LEADER], vel_l, tau_d_l);
+        double tau_r_f = rfob_f.step(goal_currents[DXL_ID_FOLLOWER], vel_f, tau_d_f);
+
+        //目標電流を計算
+        goal_currents[DXL_ID_LEADER] = KP * (pos_f - pos_l) + KD * (vel_f - vel_l) + tau_d_l - tau_r_l;
+        goal_currents[DXL_ID_FOLLOWER] = KP * (pos_l - pos_f) + KD * (vel_l - vel_f) + tau_d_f - tau_r_f;
 
 
-        double goal_current_l = KP * (pos_f - pos_l) + KD * (vel_f - vel_l);
-        double goal_current_f = KP * (pos_l - pos_f) + KD * (vel_l - vel_f);
-        //力フィードバックを追加
-        goal_current_f += -KT *(tau_r_f + tau_r_l) + tau_d_l - tau_r_l;
-        goal_current_l += -KT *(tau_r_l + tau_r_f) + tau_d_f - tau_r_f;
+        // double goal_current_l = KP * (pos_f - pos_l) + KD * (vel_f - vel_l);
+        // double goal_current_f = KP * (pos_l - pos_f) + KD * (vel_l - vel_f);
+        // //力フィードバックを追加
+        // goal_current_f += -KT *(tau_r_f + tau_r_l) + tau_d_l - tau_r_l;
+        // goal_current_l += -KT *(tau_r_l + tau_r_f) + tau_d_f - tau_r_f;
         // goal_current_f += - KT *(tau_r_f + tau_r_l) + tau_d_l;
         // goal_current_l += - KT *(tau_r_l + tau_r_f) + tau_d_f;
 
         // goal_current_f += - KT *(tau_r_f + tau_r_l);
         // goal_current_l += - KT *(tau_r_f + tau_r_l);
 
-        map<int, double> goal_currents = {
-            {DXL_ID_LEADER, goal_current_l},
-            {DXL_ID_FOLLOWER, goal_current_f}
-        };
+        // map<int, double> goal_currents = {
+        //     {DXL_ID_LEADER, goal_current_l},
+        //     {DXL_ID_FOLLOWER, goal_current_f}
+        // };
         dxlHandler.setCurrents(goal_currents);
 
         map<int, double> tau_d = {
