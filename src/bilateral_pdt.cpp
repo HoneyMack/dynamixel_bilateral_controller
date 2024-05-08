@@ -34,9 +34,9 @@ using namespace std;
 #define DEVICENAME  "/dev/ttyUSB2"
 
 
-const double KP = 8.0;//1.0;
+const double KP = 6.0;//1.0;
 const double KD = 1e-3;
-const double KT = 0.5;
+const double KT = 0.45;
 
 
 int getch() {
@@ -148,7 +148,7 @@ int main() {
         };
         // // 現在の状態を表示
         // for (const auto& id : dxlHandler.dxl_ids) {
-        //     printf("ID: %d, Cur: %4f mA, Vel: %4f, Pos: %4f, tau_d:%4f, tau_r:%4f \n", id, currents[id], velocities[id], positions[id], tau_d[id], tau_r[id]);
+        //     printf("ID: %d, Cur: %4f mA, Vel: %4f, Pos: %4f, tau_d:%4f, tau_r:%4f \n", id, goal_currents[id], velocities[id], positions[id], tau_d[id], tau_r[id]);
         // }
     }
 
