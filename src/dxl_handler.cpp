@@ -2,8 +2,16 @@
 
 #include "dxl_handler.hpp"
 #include "dxl_const.hpp"
+#include <iostream>
+#include <fcntl.h>   // ファイル制御の定義
+#include <errno.h>   // エラー番号の定義
+#include <termios.h> // POSIX端末制御定義
+#include <unistd.h>  // UNIX標準関数定義
+#include <sys/ioctl.h> // 入出力制御の定義
+#include <linux/serial.h> // Linuxシリアル通信定義
 
 DXLHandler::DXLHandler(const char* device_name) {
+    this->device_name = device_name;
     this->portHandler = dynamixel::PortHandler::getPortHandler(device_name);
     this->packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 }
@@ -16,12 +24,31 @@ DXLHandler::~DXLHandler() {
 
 
 void DXLHandler::setup() {
+
     // Read, WriteHandlerの設定
     currentSyncRead = new dynamixel::GroupFastSyncRead(portHandler, packetHandler, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT);
     positionSyncRead = new dynamixel::GroupFastSyncRead(portHandler, packetHandler, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION);
     velocitySyncRead = new dynamixel::GroupFastSyncRead(portHandler, packetHandler, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY);
 
     currentSyncWrite = new dynamixel::GroupSyncWrite(portHandler, packetHandler, ADDR_GOAL_CURRENT, LEN_GOAL_CURRENT);
+
+    // 一度シリアルポートを開いて，low_latencyモードにする
+    int fd = open(device_name, O_RDWR | O_NOCTTY | O_NDELAY);
+    if (fd == -1) {
+        std::cerr << "Failed to open the device." << std::endl;
+        return;
+    }
+    else {
+        struct serial_struct serial;
+        if (ioctl(fd, TIOCGSERIAL, &serial) != -1) {
+            serial.flags |= ASYNC_LOW_LATENCY;
+            ioctl(fd, TIOCSSERIAL, &serial);
+        }
+        else {
+            std::cerr << "Failed to get serial_struct." << std::endl;
+        }
+        close(fd);
+    }
 
 
     // Open port
@@ -43,10 +70,6 @@ void DXLHandler::setup() {
         return;
     }
 
-
-    // サーボのトルクをオンにする
-    for (const int dxl_id : this->dxl_ids)
-        setTorqueEnable(dxl_id, true);
 
     // パラメータを追加
     for (const int dxl_id : this->dxl_ids) {

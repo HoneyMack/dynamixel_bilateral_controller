@@ -30,6 +30,7 @@ class DXLHandler
         map<int,double> getVelocities();
 
     private:
+        const char* device_name;
         dynamixel::PortHandler *portHandler;
         dynamixel::PacketHandler *packetHandler;
         dynamixel::GroupFastSyncRead *currentSyncRead, *positionSyncRead, *velocitySyncRead;
