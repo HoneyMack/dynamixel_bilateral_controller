@@ -1,5 +1,7 @@
 # build以下のファイルを無視
 build/
+# データファイルを無視
+data/
 
 # Prerequisites
 *.d
