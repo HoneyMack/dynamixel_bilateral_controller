@@ -71,6 +71,11 @@ void DXLHandler::setup() {
     }
 
 
+    // サーボのトルクをオンにする
+    for (const int dxl_id : this->dxl_ids)
+        setTorqueEnable(dxl_id, true);
+
+
     // パラメータを追加
     for (const int dxl_id : this->dxl_ids) {
         int dxl_comm_result = currentSyncRead->addParam(dxl_id);
