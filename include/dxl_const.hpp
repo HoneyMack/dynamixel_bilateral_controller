@@ -22,6 +22,8 @@
 #define UNIT_VELOCITY               0.229 // [rev/min]
 #define UNIT_POSITION               0.088 // [deg/pulse]
 
+#define MAX_CURRENT                 1700.0 // [mA]
+
 
 // DYNAMIXEL Protocol Version (1.0 / 2.0)
 // https://emanual.robotis.com/docs/en/dxl/protocol2/
