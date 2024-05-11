@@ -1,4 +1,5 @@
 //dynamixel操作用の定数
+#include <map>
 
 #ifndef DXL_CONST_HPP
 #define DXL_CONST_HPP
@@ -18,7 +19,7 @@
 #define MINIMUM_POSITION_LIMIT      0  // Refer to the Minimum Position Limit of product eManual
 #define MAXIMUM_POSITION_LIMIT      4095  // Refer to the Maximum Position Limit of product eManual
 
-#define UNIT_CURRENT                1.0 // [mA]
+
 #define UNIT_VELOCITY               0.229 // [rev/min]
 #define UNIT_POSITION               0.088 // [deg/pulse]
 
@@ -29,5 +30,17 @@
 // https://emanual.robotis.com/docs/en/dxl/protocol2/
 #define PROTOCOL_VERSION  2.0
 #define BAUDRATE 1000000 // 1Mbps
+
+enum class DynamixelType:int{
+    XL330,
+    XM430
+};
+
+// 定数指定
+static std::map<DynamixelType,const double> UNIT_CURRENT= // [mA]
+    {
+        {DynamixelType::XL330, 1.0},
+        {DynamixelType::XM430, 2.69}
+    };
 
 #endif

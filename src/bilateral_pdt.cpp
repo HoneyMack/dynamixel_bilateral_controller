@@ -57,9 +57,9 @@ double clip(double value, double min, double max) {
 }
 
 int main() {
-    DXLHandler dxlHandler(DEVICENAME);
-    dxlHandler.addServo(DXL_ID_LEADER);
-    dxlHandler.addServo(DXL_ID_FOLLOWER);
+    DXLHandler dxlHandler(DEVICENAME, BAUDRATE);
+    dxlHandler.addServo(DXL_ID_LEADER, DynamixelType::XL330);
+    dxlHandler.addServo(DXL_ID_FOLLOWER, DynamixelType::XL330);
     dxlHandler.setup();
 
     int dxl_comm_result = COMM_TX_FAIL;             // Communication result

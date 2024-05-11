@@ -36,7 +36,7 @@ using namespace std;
 
 // SERVO_ID
 #define DXL_ID 1
-#define DEVICENAME  "/dev/ttyUSB1"
+#define DEVICENAME  "/dev/ttyUSB2"
 
 
 const double KP = 1.0;
@@ -57,8 +57,8 @@ int getch() {
 
 
 int main() {
-    DXLHandler dxlHandler(DEVICENAME);
-    dxlHandler.addServo(DXL_ID);
+    DXLHandler dxlHandler(DEVICENAME, BAUDRATE);
+    dxlHandler.addServo(DXL_ID, DynamixelType::XL330);
     dxlHandler.setup();
     this_thread::sleep_for(chrono::seconds(1)); // 1s
 
@@ -69,7 +69,7 @@ int main() {
     atomic<bool> isThreadFinished(false);
 
     // 入力値の設定    
-    vector<double> cur_refs = {80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0};
+    vector<double> cur_refs = { 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0 };
     int num_samples = 3000;
     // vector<double> cur_refs = { 70.0, 100.0, 150, 200};
     // 出力データの保存先
@@ -101,6 +101,7 @@ int main() {
                 //velocities = dxlHandler.getVelocities(); //NOTE: 500 Hz出すために角速度は取得しない
                 auto end = chrono::system_clock::now();
                 chrono::duration<double>  e_time = end - start;
+
                 data[cur_idx].push_back(make_tuple(e_time.count(), currents[DXL_ID], positions[DXL_ID], velocities[DXL_ID]));
             }
         }
@@ -135,13 +136,13 @@ int main() {
     for (int i = 0; i < data.size(); i++) {
         FILE* fp;
         string filename = "data" + to_string(i) + ".csv";
-        fp=fopen(filename.c_str(), "w");
+        fp = fopen(filename.c_str(), "w");
         fprintf(fp, "time,current,position,velocity\n");
         for (const auto& d : data[i]) {
             fprintf(fp, "%f, %f, %f, %f\n", get<0>(d), get<1>(d), get<2>(d), get<3>(d));
         }
         fclose(fp);
-        
+
     }
 
     return 0;

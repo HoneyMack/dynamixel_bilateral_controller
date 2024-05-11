@@ -1,7 +1,6 @@
 // dynamixelを管理するためのクラス．
 
 #include "dxl_handler.hpp"
-#include "dxl_const.hpp"
 #include <iostream>
 #include <fcntl.h>   // ファイル制御の定義
 #include <errno.h>   // エラー番号の定義
@@ -10,8 +9,8 @@
 #include <sys/ioctl.h> // 入出力制御の定義
 #include <linux/serial.h> // Linuxシリアル通信定義
 
-DXLHandler::DXLHandler(const char* device_name) {
-    this->device_name = device_name;
+
+DXLHandler::DXLHandler(const char* device_name, const int baudrate) :device_name(device_name), baudrate(baudrate) {
     this->portHandler = dynamixel::PortHandler::getPortHandler(device_name);
     this->packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 }
@@ -61,7 +60,7 @@ void DXLHandler::setup() {
     }
 
     // Set port baudrate
-    if (portHandler->setBaudRate(BAUDRATE)) {
+    if (portHandler->setBaudRate(baudrate)) {
         printf("Succeeded to change the baudrate!\n");
     }
     else {
@@ -108,8 +107,9 @@ void DXLHandler::shutdown() {
     portHandler->closePort();
 }
 
-void DXLHandler::addServo(int id) {
-    this->dxl_ids.push_back(id);
+void DXLHandler::addServo(int id, dxlType type /*= dxlType::XL330*/) {
+    dxl_ids.push_back(id);
+    dxl_types[id] = type;
 }
 
 void DXLHandler::setTorqueEnable(int id, bool enable) {
@@ -138,7 +138,7 @@ void DXLHandler::setCurrents(map<int, double> currents) {
         bool dxl_addparam_result = COMM_TX_FAIL;
         uint8_t dxl_error = 0;
 
-        int16_t current = (int16_t)(currents[dxl_id] / UNIT_CURRENT);
+        int16_t current = (int16_t)(currents[dxl_id] / UNIT_CURRENT[dxl_types[dxl_id]]);
         param_goal_current[0] = DXL_LOBYTE(current);
         param_goal_current[1] = DXL_HIBYTE(current);
 
@@ -167,7 +167,7 @@ map<int, double> DXLHandler::getCurrents() {
             continue;
         }
         int16_t current = currentSyncRead->getData(dxl_id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT);
-        currents[dxl_id] = current * UNIT_CURRENT;
+        currents[dxl_id] = current * UNIT_CURRENT[dxl_types[dxl_id]];
     }
 
     return currents;

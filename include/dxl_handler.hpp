@@ -4,24 +4,26 @@
 #define DXL_HANDLER_HPP
 
 #include <dynamixel_sdk/dynamixel_sdk.h>
+#include "dxl_const.hpp"
 #include <iostream>
 #include <vector>
 #include <map>
 
+
 using namespace std;
+using dxlType = DynamixelType; // 名前が長いので省略して使用
 
 class DXLHandler
 {
     public:
         vector<int> dxl_ids;
 
-        
-        DXLHandler(const char* device_name);
+        DXLHandler(const char* device_name, const int baudrate);
         ~DXLHandler();
 
         void setup();
         void shutdown();
-        void addServo(int id);
+        void addServo(int id, dxlType type);
         void setTorqueEnable(int id, bool enable);
         void setCurrents(map<int,double> currents);
     
@@ -31,6 +33,8 @@ class DXLHandler
 
     private:
         const char* device_name;
+        const int baudrate;
+        map<int, dxlType> dxl_types;
         dynamixel::PortHandler *portHandler;
         dynamixel::PacketHandler *packetHandler;
         dynamixel::GroupFastSyncRead *currentSyncRead, *positionSyncRead, *velocitySyncRead;
