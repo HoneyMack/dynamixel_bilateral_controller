@@ -186,7 +186,7 @@ int main() {
     };
 
     map<int, double> Kds = {
-        {1, 40.0/1.5},
+        {1, 40.0 / 1.5},
         {2, 28.0},
         // {3, 66.0},
         {4, 24.0},
@@ -250,6 +250,11 @@ int main() {
             if (start_get_l_state_flag == true) {
                 vel_l = convert_dxl_to_joint_idx(leaderDxlHandler.getVelocities());
                 pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
+
+                for (auto& kv : vel_l) {
+                    kv.second *= 6;//rpm -> deg/s
+                }
+
                 start_get_l_state_flag = false;
             }
             // 0.1ms待つ
@@ -262,6 +267,11 @@ int main() {
             if (start_get_f_state_flag == true) {
                 vel_f = convert_dxl_to_joint_idx(followerDxlHandler.getVelocities());
                 pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
+
+                for (auto& kv : vel_f) {
+                    kv.second *= 6;//rpm -> deg/s
+                }
+
                 start_get_f_state_flag = false;
             }
             // 0.1ms待つ
@@ -281,22 +291,6 @@ int main() {
                 (start_get_l_state_flag == true || start_get_f_state_flag == true)) {
                 this_thread::sleep_for(chrono::microseconds(100));
             }
-            // 現在の状態を取得
-            // auto currents = dxlHandler.getCurrents();
-            // vel_l = convert_dxl_to_joint_idx(leaderDxlHandler.getVelocities());
-            // vel_f = convert_dxl_to_joint_idx(followerDxlHandler.getVelocities());
-            // pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
-            // pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
-
-            //rpm -> deg/s
-            for (auto& kv : vel_l) {
-                kv.second *= 6;
-            }
-            for (auto& kv : vel_f) {
-                kv.second *= 6;
-            }
-
-            // 目標電流を設定
 
             //外乱・反力を計算
             auto tau_d_l = cranex_obs_l.step_torque_disturb(torque_goal_l, pos_l, vel_l);
