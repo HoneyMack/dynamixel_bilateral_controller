@@ -159,6 +159,26 @@ void DXLHandler::setTorqueEnable(int id, bool enable) {
     }
 }
 
+void DXLHandler::setPosition(int dxl_id,double position){
+    uint8_t param_goal_position[4];
+    bool dxl_addparam_result = COMM_TX_FAIL;
+    uint8_t dxl_error = 0;
+
+    int32_t goal_position = (int32_t)(position / UNIT_POSITION);
+    param_goal_position[0] = DXL_LOBYTE(DXL_LOWORD(goal_position));
+    param_goal_position[1] = DXL_HIBYTE(DXL_LOWORD(goal_position));
+    param_goal_position[2] = DXL_LOBYTE(DXL_HIWORD(goal_position));
+    param_goal_position[3] = DXL_HIBYTE(DXL_HIWORD(goal_position));
+
+    dxl_addparam_result = currentSyncWrite->addParam(dxl_id, param_goal_position);
+    if (dxl_addparam_result != true) {
+        fprintf(stderr, "[ID:%03d] groupSyncWrite addparam failed\n", dxl_id);
+    }
+    currentSyncWrite->txPacket();
+    currentSyncWrite->clearParam();
+
+}
+
 /// @brief サーボに加える電流を設定
 /// @param currents 電流値[mA]
 void DXLHandler::setCurrents(map<int, double> currents) {

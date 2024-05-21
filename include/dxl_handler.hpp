@@ -27,6 +27,7 @@ class DXLHandler
         void setOperationMode(int dxl_id, int mode);
         void addServo(int id, dxlType type);
         void setTorqueEnable(int id, bool enable);
+        void setPosition(int dxl_id, double position);
         void setCurrents(map<int,double> currents);
         void setTorques(map<int,double> torques);
     
