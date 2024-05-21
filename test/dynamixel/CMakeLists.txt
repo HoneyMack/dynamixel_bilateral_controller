@@ -20,3 +20,8 @@ target_link_libraries(identify_system ${dynamixelSDK_LIBS} )
 add_executable(measure_bulk_rw measure_bulk_rw.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
 target_include_directories(measure_bulk_rw PUBLIC ${PROJECT_SOURCE_DIR}/include ${dynamixelSDK_HEADERS} )
 target_link_libraries(measure_bulk_rw ${dynamixelSDK_LIBS} )
+
+
+add_executable(cranex7_get_states cranex7_get_states.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
+target_include_directories(cranex7_get_states PUBLIC ${PROJECT_SOURCE_DIR}/include ${dynamixelSDK_HEADERS} )
+target_link_libraries(cranex7_get_states ${dynamixelSDK_LIBS} )
