@@ -106,19 +106,8 @@ int main() {
         }
     }
 
-    leaderDxlHandler.setup(false);
-    followerDxlHandler.setup(false);
-    
-    // modeをcurrentに変更
-    for (auto kv : DXL_TO_JOINT_ID) {
-        leaderDxlHandler.setOperationMode(kv.first, 0);
-        followerDxlHandler.setOperationMode(kv.first, 0);
-    }
-    // torqueをオン
-    for (auto kv : DXL_TO_JOINT_ID) {
-        leaderDxlHandler.setTorqueEnable(kv.first, true);
-        followerDxlHandler.setTorqueEnable(kv.first, true);
-    }
+    leaderDxlHandler.setup(true, 0);
+    followerDxlHandler.setup(true, 0);
 
     //疑似微分器
     // double T_control = 1.0 / 500;

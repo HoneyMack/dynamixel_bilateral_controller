@@ -26,7 +26,7 @@ DXLHandler::~DXLHandler() {
 }
 
 
-void DXLHandler::setup(bool torque_enable /*= true*/) {
+void DXLHandler::setup(bool torque_enable /*= true*/, int mode /*= -1*/) {
 
     // Read, WriteHandlerの設定
     currentSyncRead = new dynamixel::GroupFastSyncRead(portHandler, packetHandler, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT);
@@ -71,6 +71,12 @@ void DXLHandler::setup(bool torque_enable /*= true*/) {
         printf("Failed to change the baudrate!\n");
         printf("Press any key to terminate...\n");
         return;
+    }
+
+    // モードが指定されている場合, モードを設定
+    if (mode >= 0){ 
+        for (const int dxl_id : this->dxl_ids)
+            setOperationMode(dxl_id, mode);
     }
 
     if (torque_enable) {

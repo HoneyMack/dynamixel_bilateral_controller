@@ -22,7 +22,7 @@ class DXLHandler
         DXLHandler(const char* device_name, const int baudrate);
         ~DXLHandler();
 
-        void setup(bool torque_enable = true);
+        void setup(bool torque_enable = true, int mode = -1);
         void shutdown();
         void setOperationMode(int dxl_id, int mode);
         void addServo(int id, dxlType type);
