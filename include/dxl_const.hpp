@@ -33,7 +33,7 @@
 enum class DynamixelType:int{
     XL330,
     XM430,
-    XM550,
+    XM540,
 };
 
 // 定数指定
@@ -41,14 +41,14 @@ static std::map<DynamixelType,const double> UNIT_CURRENT= // [mA]
     {
         {DynamixelType::XL330, 1.0},
         {DynamixelType::XM430, 2.69},
-        {DynamixelType::XM550, 2.69},
+        {DynamixelType::XM540, 2.69},
     };
 
 static std::map<DynamixelType,const double> MAX_CURRENT= // [mA]
     {
         {DynamixelType::XL330, 1700},
         {DynamixelType::XM430, 3200},
-        {DynamixelType::XM550, 5500},
+        {DynamixelType::XM540, 5500},
     };
 
 #endif

@@ -95,12 +95,20 @@ int main() {
     DXLHandler leaderDxlHandler(LEADER_DEVICENAME, 3000000);
     DXLHandler followerDxlHandler(FOLLOWER_DEVICENAME, 3000000);
     for (auto kv : DXL_TO_JOINT_ID) {
-        leaderDxlHandler.addServo(kv.first, DynamixelType::XM430);
-        followerDxlHandler.addServo(kv.first, DynamixelType::XM430);
+        // J2はXM540, それ以外は XM430
+        if (kv.second == 2) {
+            leaderDxlHandler.addServo(kv.first, DynamixelType::XM540);
+            followerDxlHandler.addServo(kv.first, DynamixelType::XM540);
+        }
+        else{
+            leaderDxlHandler.addServo(kv.first, DynamixelType::XM430);
+            followerDxlHandler.addServo(kv.first, DynamixelType::XM430);
+        }
     }
 
     leaderDxlHandler.setup(false);
     followerDxlHandler.setup(false);
+    
     // modeをcurrentに変更
     for (auto kv : DXL_TO_JOINT_ID) {
         leaderDxlHandler.setOperationMode(kv.first, 0);
@@ -115,11 +123,12 @@ int main() {
     //疑似微分器
     // double T_control = 1.0 / 500;
     double T_control = 1.0 / 250;
-    double cutoff_diff = 20; //10Hz
-    double cutoff_disturbance = 2.5; //10Hz
-    double cutoff_reaction = 2.5; //10Hz
+    double cutoff_diff = 20; 
+    double cutoff_disturbance = 2.5;
+    double cutoff_reaction = 2.5;
 
-    //cranex7 observer
+    //cranex7 observer のパラメータ
+    // TODO: 要パラメータ調整
     map<int, double> Js = {
         {1, 0.012},
         {2, 0.113},
