@@ -132,10 +132,10 @@ int main() {
 
     //疑似微分器
     // double T_control = 1.0 / 500;
-    double T_control = 1.0 / 250;
+    double T_control = 1.0 / 335;
     double cutoff_diff = 20;
-    double cutoff_disturbance = 1.5;
-    double cutoff_reaction = 1.5;
+    double cutoff_disturbance = 2.0;
+    double cutoff_reaction = 2.0;
 
     //cranex7 observer のパラメータ
     // TODO: 要パラメータ調整
@@ -161,14 +161,14 @@ int main() {
     };
     map<int, double> Ms_lead = {
         {1, 2.094 / 4},
-        {2, 1.151 / 4},
-        {3, 1.183 / 4},
+        {2, 1.151 / 3},
+        {3, 1.183 / 3},
 
     };
     map<int, double> Ms_follow = {
         {1, 2.294 / 4},
-        {2, 1.451 / 4},
-        {3, 1.483 / 4},
+        {2, 1.451 / 3},
+        {3, 1.483 / 3},
     };
     // //重力補償なし
     // map<int, double> Ms_lead;
@@ -186,7 +186,7 @@ int main() {
     };
 
     map<int, double> Kds = {
-        {1, 40.0/2},
+        {1, 40.0/1.5},
         {2, 28.0},
         // {3, 66.0},
         {4, 24.0},
@@ -214,10 +214,10 @@ int main() {
         {2, 0.70},
         //     {3, 1.00},
             {4, 0.70},
-            // {5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
-            // {6, 1.00},
+            //{5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
+            //{6, 0.80},
             //{7, 0.80},
-            {8, 1.00},
+            {8, 0.80},
     };
 
     //角度の単位変換に伴うパラメータの変換
@@ -239,16 +239,54 @@ int main() {
 
     map<int, double> torque_goal_l, torque_goal_f;
 
-    atomic<bool> finish_flag(false);
+    atomic<bool> finish_flag(false), start_get_l_state_flag(false), start_get_f_state_flag(false);
+    map<int, double> vel_l, vel_f, pos_l, pos_f;
+    //実行時間計測
+    chrono::system_clock::time_point time_start, time_end;
+
+    time_start = chrono::system_clock::now();
+    function<void()> get_l_state = [&]() {
+        while (finish_flag == false) {
+            if (start_get_l_state_flag == true) {
+                vel_l = convert_dxl_to_joint_idx(leaderDxlHandler.getVelocities());
+                pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
+                start_get_l_state_flag = false;
+            }
+            // 0.1ms待つ
+            this_thread::sleep_for(chrono::microseconds(100));
+        }
+        };
+
+    function<void()> get_f_state = [&]() {
+        while (finish_flag == false) {
+            if (start_get_f_state_flag == true) {
+                vel_f = convert_dxl_to_joint_idx(followerDxlHandler.getVelocities());
+                pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
+                start_get_f_state_flag = false;
+            }
+            // 0.1ms待つ
+            this_thread::sleep_for(chrono::microseconds(100));
+        }
+        };
+
+
     function<void()> controller = [&]() {
         int counter = 0;
         while (finish_flag == false) {
+            //情報の取得開始
+            start_get_l_state_flag = true;
+            start_get_f_state_flag = true;
+
+            while (finish_flag == false &&
+                (start_get_l_state_flag == true || start_get_f_state_flag == true)) {
+                this_thread::sleep_for(chrono::microseconds(100));
+            }
             // 現在の状態を取得
             // auto currents = dxlHandler.getCurrents();
-            auto vel_l = convert_dxl_to_joint_idx(leaderDxlHandler.getVelocities());
-            auto vel_f = convert_dxl_to_joint_idx(followerDxlHandler.getVelocities());
-            auto pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
-            auto pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
+            // vel_l = convert_dxl_to_joint_idx(leaderDxlHandler.getVelocities());
+            // vel_f = convert_dxl_to_joint_idx(followerDxlHandler.getVelocities());
+            // pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
+            // pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
 
             //rpm -> deg/s
             for (auto& kv : vel_l) {
@@ -287,7 +325,13 @@ int main() {
             followerDxlHandler.setTorques(torque_goal_f);
 
             counter++;
-            if (counter > 100) {
+            if (counter >= 100) {
+                // 周波数を表示
+                time_end = chrono::system_clock::now();
+                double elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start).count();
+                double freq = counter / (elapsed / 1000);
+                printf("freq: %5.3f\n", freq);
+
                 // 現在の状態を表示
                 //torque
                 printf("torque:\t");
@@ -311,6 +355,8 @@ int main() {
                 printf("\n\n\n");
                 counter = 0;
 
+                time_start = chrono::system_clock::now();
+
             }
             // // 現在の状態を表示
             // for (const auto& id : dxlHandler.dxl_ids) {
@@ -318,12 +364,16 @@ int main() {
             // }
         }
         };
+    thread get_l_state_thread(get_l_state), get_f_state_thread(get_f_state);
     thread controller_thread(controller);
 
     cout << "Press any key to finish" << endl;
     getch();
     finish_flag = true;
     controller_thread.join();
+    get_l_state_thread.join();
+    get_f_state_thread.join();
+
 
     leaderDxlHandler.shutdown();
     followerDxlHandler.shutdown();
