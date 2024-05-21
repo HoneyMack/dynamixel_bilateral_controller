@@ -28,6 +28,7 @@ class DXLHandler
         void addServo(int id, dxlType type);
         void setTorqueEnable(int id, bool enable);
         void setCurrents(map<int,double> currents);
+        void setTorques(map<int,double> torques);
     
         map<int,double> getCurrents();
         map<int,double> getPositions();
@@ -41,6 +42,7 @@ class DXLHandler
         dynamixel::PacketHandler *packetHandler;
         dynamixel::GroupFastSyncRead *currentSyncRead, *positionSyncRead, *velocitySyncRead;
         dynamixel::GroupSyncWrite *currentSyncWrite;
+
 
 
         bool checkError(int dxl_comm_result, uint8_t dxl_error, int id);

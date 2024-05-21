@@ -51,4 +51,10 @@ static std::map<DynamixelType,const double> MAX_CURRENT= // [mA]
         {DynamixelType::XM540, 5500},
     };
 
+static std::map<DynamixelType,const double> AMPERE_TO_TORQUE = // [rev/min]
+    { 
+        {DynamixelType::XM430, 1.8119* 1e-3},
+        {DynamixelType::XM540, 2.2799* 1e-3},
+    };
+
 #endif

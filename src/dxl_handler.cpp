@@ -183,6 +183,15 @@ void DXLHandler::setCurrents(map<int, double> currents) {
     currentSyncWrite->clearParam();
 }
 
+void DXLHandler::setTorques(map<int, double> torques) {
+    map<int, double> currents;
+    
+    for (auto dxl_id : dxl_ids) {
+        currents[dxl_id] = torques[dxl_id] / AMPERE_TO_TORQUE[dxl_types[dxl_id]];
+    }
+    setCurrents(currents);
+}
+
 map<int, double> DXLHandler::getCurrents() {
     map<int, double> currents;
     // 現在の電流値を取得

@@ -62,8 +62,6 @@ static map<int, int> JOINT_TO_DXL_ID = {
     {8, 9}
 };
 
-
-
 int getch() {
     struct termios oldt, newt;
     int ch;
@@ -89,6 +87,15 @@ map<int, double> convert_joint_to_dxl_idx(map<int, double> val_joint) {
         val_dxl[JOINT_TO_DXL_ID[kv.first]] = kv.second;
     }
     return val_dxl;
+}
+
+map<int, double> convert_unit_rad_to_deg(map<int, double> param_t) {
+    //単位系が違うので変換
+    map<int, double> param_c;
+    for (auto kv : param_t) {
+        param_c[kv.first] = kv.second * 3.14159 / 180.0;
+    }
+    return param_c;
 }
 
 int main() {
@@ -129,75 +136,96 @@ int main() {
         {8, 0.007}
     };
     map<int, double> Ds = {
-        {1, 0.050},
+        {1, 0.0501},
         {2, 0.0000},
         {3, 0.242},
         {4, 0.000},
         {5, 0.040},
-        {6, 0.039},
-        {7, 0.050},
-        {8, 0.021}
+        {6, 0.0391},
+        {7, 0.0500},
+        {8, 0.0210}
     };
     map<int, double> Ms_lead = {
-        {1, 2.094},
-        {2, 1.151},
-        {3, 1.183},
+        {1, 2.094/4},
+        {2, 1.151/4},
+        {3, 1.183/4},
 
     };
     map<int, double> Ms_follow = {
-        {1, 2.294},
-        {2, 1.451},
-        {3, 1.483},
+        {1, 2.294/4},
+        {2, 1.451/4},
+        {3, 1.483/4},
     };
+    // //重力補償なし
+    // map<int, double> Ms_lead;
+    // map<int, double> Ms_follow;
 
     map<int, double> Kps = {
-        {1, 50.0},
-        {2, 50.0},
-        {3, 50.0},
-        {4, 50.0},
-        {5, 50.0},
-        {6, 50.0},
-        {7, 50.0},
-        {8, 50.0}
+        {1, 256.0},
+        {2, 196.0},
+        {3, 961.0},
+        {4, 144.0},
+        {5, 289.0},
+        {6, 324.0},
+        {7, 144.0},
+        {8, 324.0}
     };
 
-    map<int, double> Kds = {
-        {1, 1e-3},
-        {2, 1e-3},
-        {3, 1e-3},
-        {4, 1e-3},
-        {5, 1e-3},
-        {6, 1e-3},
-        {7, 1e-3},
-        {8, 1e-3}
-    };
+    // map<int, double> Kds = {
+    //     {1, 40.0},
+    //     {2, 28.0},
+    //     {3, 66.0},
+    //     {4, 24.0},
+    //     {5, 34.0},
+    //     {6, 36.0},
+    //     {7, 24.0},
+    //     {8, 36.0}
+    // };
 
-    map<int, double> Kts = {
-        {1, 0.5},
-        {2, 0.5},
-        {3, 0.5},
-        {4, 0.5},
-        {5, 0.5},
-        {6, 0.5},
-        {7, 0.5},
-        {8, 0.5},
-    };
+    //Kds 0
+    map<int, double> Kds;
+
+    // map<int, double> Kts = {
+    //     {1, 0.70},
+    //     {2, 0.70},
+    //     {3, 1.00},
+    //     {4, 1.00},
+    //     {5, 0.80},
+    //     {6, 1.00},
+    //     {7, 0.80},
+    //     {8, 1.00},
+    // };
+
+    map<int, double> Kts;
+
+    //角度の単位変換に伴うパラメータの変換
+    Js = convert_unit_rad_to_deg(Js);
+    Ds = convert_unit_rad_to_deg(Ds);
+    
+
+    // Kps = convert_unit_rad_to_deg(Kps);
+    // Kds = convert_unit_rad_to_deg(Kds);
+    
+    
+
+    // Kps -> Js*Kps, Kds -> Js*Kds
+
 
     //オブザーバ:外乱・反力を計算
     Cranex7Observer cranex_obs_l(Js, Ds, Ms_lead, cutoff_disturbance, T_control);
     Cranex7Observer cranex_obs_f(Js, Ds, Ms_follow, cutoff_disturbance, T_control);
 
-    map<int, double> cur_goal_l, cur_goal_f;
+    map<int, double> torque_goal_l, torque_goal_f;
 
     atomic<bool> finish_flag(false);
     function<void()> controller = [&]() {
         while (finish_flag == false) {
             // 現在の状態を取得
             // auto currents = dxlHandler.getCurrents();
-            auto pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
             auto vel_l = convert_dxl_to_joint_idx(leaderDxlHandler.getVelocities());
-            auto pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
             auto vel_f = convert_dxl_to_joint_idx(followerDxlHandler.getVelocities());
+            auto pos_l = convert_dxl_to_joint_idx(leaderDxlHandler.getPositions());
+            auto pos_f = convert_dxl_to_joint_idx(followerDxlHandler.getPositions());
 
             //rpm -> deg/s
             for (auto& kv : vel_l) {
@@ -224,30 +252,30 @@ int main() {
             // 目標電流を設定
 
             //外乱・反力を計算
-            auto tau_d_l = cranex_obs_l.step_torque_disturb(cur_goal_l, pos_l, vel_l);
-            auto tau_d_f = cranex_obs_f.step_torque_disturb(cur_goal_f, pos_f, vel_f);
-            auto tau_r_l = cranex_obs_l.step_torque_react(cur_goal_l, pos_l, vel_l, tau_d_l);
-            auto tau_r_f = cranex_obs_f.step_torque_react(cur_goal_f, pos_f, vel_f, tau_d_f);
+            auto tau_d_l = cranex_obs_l.step_torque_disturb(torque_goal_l, pos_l, vel_l);
+            auto tau_d_f = cranex_obs_f.step_torque_disturb(torque_goal_f, pos_f, vel_f);
+            auto tau_r_l = cranex_obs_l.step_torque_react(torque_goal_l, pos_l, vel_l, tau_d_l);
+            auto tau_r_f = cranex_obs_f.step_torque_react(torque_goal_f, pos_f, vel_f, tau_d_f);
 
 
             //目標電流を計算
             for (auto& kv : pos_l) {
-                cur_goal_l[kv.first] = Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) + Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
-                cur_goal_f[kv.first] = Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
+                torque_goal_l[kv.first] = Js[kv.first]/2 * Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) +Js[kv.first]/2 *  Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
+                torque_goal_f[kv.first] =Js[kv.first]/2 *  Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Js[kv.first]/2 * Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
             }
 
             // 力フィードバックを追加
             for (auto& kv : tau_r_l) {
-                cur_goal_l[kv.first] += -Kts[kv.first] * (tau_r_f[kv.first] + tau_r_l[kv.first]) + tau_d_l[kv.first] - tau_r_l[kv.first];
-                cur_goal_f[kv.first] += -Kts[kv.first] * (tau_r_l[kv.first] + tau_r_f[kv.first]) + tau_d_f[kv.first] - tau_r_f[kv.first];
+                torque_goal_l[kv.first] += -Kts[kv.first]/2 * (tau_r_f[kv.first] + tau_r_l[kv.first]) + tau_d_l[kv.first] - tau_r_l[kv.first];
+                torque_goal_f[kv.first] += -Kts[kv.first]/2 * (tau_r_l[kv.first] + tau_r_f[kv.first]) + tau_d_f[kv.first] - tau_r_f[kv.first];
             }
 
             //インデックス調整
-            cur_goal_l = convert_joint_to_dxl_idx(cur_goal_l);
-            cur_goal_f = convert_joint_to_dxl_idx(cur_goal_f);
+            torque_goal_l = convert_joint_to_dxl_idx(torque_goal_l);
+            torque_goal_f = convert_joint_to_dxl_idx(torque_goal_f);
 
-            leaderDxlHandler.setCurrents(cur_goal_l);
-            followerDxlHandler.setCurrents(cur_goal_f);
+            leaderDxlHandler.setTorques(torque_goal_l);
+            followerDxlHandler.setTorques(torque_goal_f);
 
             // // 現在の状態を表示
             // for (const auto& id : dxlHandler.dxl_ids) {
