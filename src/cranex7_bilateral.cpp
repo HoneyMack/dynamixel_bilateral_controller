@@ -107,7 +107,7 @@ int main() {
             leaderDxlHandler.addServo(kv.first, DynamixelType::XM540);
             followerDxlHandler.addServo(kv.first, DynamixelType::XM540);
         }
-        else{
+        else {
             leaderDxlHandler.addServo(kv.first, DynamixelType::XM430);
             followerDxlHandler.addServo(kv.first, DynamixelType::XM430);
         }
@@ -133,7 +133,7 @@ int main() {
     //疑似微分器
     // double T_control = 1.0 / 500;
     double T_control = 1.0 / 250;
-    double cutoff_diff = 20; 
+    double cutoff_diff = 20;
     double cutoff_disturbance = 1.5;
     double cutoff_reaction = 1.5;
 
@@ -147,7 +147,7 @@ int main() {
         {5, 0.006},
         {6, 0.007},
         {7, 0.006},
-        {8, 0.007}
+        {8, 0.007},
     };
     map<int, double> Ds = {
         {1, 0.0501},
@@ -160,15 +160,15 @@ int main() {
         {8, 0.0210}
     };
     map<int, double> Ms_lead = {
-        {1, 2.094/4},
-        {2, 1.151/4},
-        {3, 1.183/4},
+        {1, 2.094 / 4},
+        {2, 1.151 / 4},
+        {3, 1.183 / 4},
 
     };
     map<int, double> Ms_follow = {
-        {1, 2.294/4},
-        {2, 1.451/4},
-        {3, 1.483/4},
+        {1, 2.294 / 4},
+        {2, 1.451 / 4},
+        {3, 1.483 / 4},
     };
     // //重力補償なし
     // map<int, double> Ms_lead;
@@ -185,19 +185,19 @@ int main() {
         {8, 324.0}
     };
 
-    // map<int, double> Kds = {
-    //     {1, 40.0},
-    //     {2, 28.0},
-    //     {3, 66.0},
-    //     {4, 24.0},
-    //     {5, 34.0},
-    //     {6, 36.0},
-    //     {7, 24.0},
-    //     {8, 36.0}
-    // };
+    map<int, double> Kds = {
+        {1, 40.0/2},
+        {2, 28.0},
+        // {3, 66.0},
+        {4, 24.0},
+        // {5, 34.0/2},
+        // {6, 36.0/2},
+        // {7, 24.0},
+        // {8, 36.0/2}
+    };
 
     //Kds 0
-    map<int, double> Kds;
+    // map<int, double> Kds;
 
     // map<int, double> Kts = {
     //     {1, 0.70},
@@ -212,23 +212,23 @@ int main() {
     map<int, double> Kts = {
         {1, 0.70},
         {2, 0.70},
-    //     {3, 1.00},
-        {4, 0.70},
-        // {5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
-    //     {6, 1.00},
-    //     {7, 0.80},
-    //     {8, 1.00},
+        //     {3, 1.00},
+            {4, 0.70},
+            // {5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
+            // {6, 1.00},
+            //{7, 0.80},
+            {8, 1.00},
     };
 
     //角度の単位変換に伴うパラメータの変換
     Js = convert_unit_rad_to_deg(Js);
     Ds = convert_unit_rad_to_deg(Ds);
-    
+
 
     // Kps = convert_unit_rad_to_deg(Kps);
     // Kds = convert_unit_rad_to_deg(Kds);
-    
-    
+
+
 
     // Kps -> Js*Kps, Kds -> Js*Kds
 
@@ -241,6 +241,7 @@ int main() {
 
     atomic<bool> finish_flag(false);
     function<void()> controller = [&]() {
+        int counter = 0;
         while (finish_flag == false) {
             // 現在の状態を取得
             // auto currents = dxlHandler.getCurrents();
@@ -257,20 +258,6 @@ int main() {
                 kv.second *= 6;
             }
 
-            // // 角速度を疑似微分により求める場合
-            // double vel_leader = Leader_filter.filter(positions[DXL_ID_LEADER]);
-            // double vel_follower = Follower_filter.filter(positions[DXL_ID_FOLLOWER]);
-            // map<int, double> velocities = {
-            //     {DXL_ID_LEADER, vel_leader},
-            //     {DXL_ID_FOLLOWER, vel_follower}
-            // };
-
-            // map<int, double> velocities = {
-            //     {DXL_ID_LEADER, 0},
-            //     {DXL_ID_FOLLOWER, 0}
-            // };
-
-
             // 目標電流を設定
 
             //外乱・反力を計算
@@ -282,14 +269,14 @@ int main() {
 
             //目標電流を計算
             for (auto& kv : pos_l) {
-                torque_goal_l[kv.first] = Js[kv.first]/2 * Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) +Js[kv.first]/2 *  Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
-                torque_goal_f[kv.first] =Js[kv.first]/2 *  Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Js[kv.first]/2 * Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
+                torque_goal_l[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
+                torque_goal_f[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
             }
 
             // 力フィードバックを追加
             for (auto& kv : tau_r_l) {
-                torque_goal_l[kv.first] += -Kts[kv.first]/2 * (tau_r_f[kv.first] + tau_r_l[kv.first]) + tau_d_l[kv.first] - tau_r_l[kv.first];
-                torque_goal_f[kv.first] += -Kts[kv.first]/2 * (tau_r_l[kv.first] + tau_r_f[kv.first]) + tau_d_f[kv.first] - tau_r_f[kv.first];
+                torque_goal_l[kv.first] += -Kts[kv.first] / 2 * (tau_r_f[kv.first] + tau_r_l[kv.first]) + tau_d_l[kv.first] - tau_r_l[kv.first];
+                torque_goal_f[kv.first] += -Kts[kv.first] / 2 * (tau_r_l[kv.first] + tau_r_f[kv.first]) + tau_d_f[kv.first] - tau_r_f[kv.first];
             }
 
             //インデックス調整
@@ -299,6 +286,32 @@ int main() {
             leaderDxlHandler.setTorques(torque_goal_l);
             followerDxlHandler.setTorques(torque_goal_f);
 
+            counter++;
+            if (counter > 100) {
+                // 現在の状態を表示
+                //torque
+                printf("torque:\t");
+                for (const auto& id : leaderDxlHandler.dxl_ids) {
+                    printf("%6.3f,", torque_goal_l[id]);
+                }
+                printf("\n");
+
+                //tau_d
+                printf("tau_d:\t");
+                for (const auto& id : leaderDxlHandler.dxl_ids) {
+                    printf("%6.3f,", tau_d_l[id]);
+                }
+                printf("\n");
+
+                //tau_r
+                printf("tau_r:\t");
+                for (const auto& id : leaderDxlHandler.dxl_ids) {
+                    printf("%6.3f,", tau_r_l[id]);
+                }
+                printf("\n\n\n");
+                counter = 0;
+
+            }
             // // 現在の状態を表示
             // for (const auto& id : dxlHandler.dxl_ids) {
             //     printf("ID: %d, Cur: %4f mA, Vel: %4f, Pos: %4f, tau_d:%4f, tau_r:%4f \n", id, goal_currents[id], velocities[id], positions[id], tau_d[id], tau_r[id]);
