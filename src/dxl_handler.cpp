@@ -9,6 +9,10 @@
 #include <sys/ioctl.h> // 入出力制御の定義
 #include <linux/serial.h> // Linuxシリアル通信定義
 
+// クリッピング関数
+double clip(double value, double min, double max) {
+    return std::min(std::max(value, min), max);
+}
 
 DXLHandler::DXLHandler(const char* device_name, const int baudrate) :device_name(device_name), baudrate(baudrate) {
     this->portHandler = dynamixel::PortHandler::getPortHandler(device_name);
@@ -22,7 +26,7 @@ DXLHandler::~DXLHandler() {
 }
 
 
-void DXLHandler::setup() {
+void DXLHandler::setup(bool torque_enable /*= true*/) {
 
     // Read, WriteHandlerの設定
     currentSyncRead = new dynamixel::GroupFastSyncRead(portHandler, packetHandler, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT);
@@ -69,10 +73,11 @@ void DXLHandler::setup() {
         return;
     }
 
-
-    // サーボのトルクをオンにする
-    for (const int dxl_id : this->dxl_ids)
-        setTorqueEnable(dxl_id, true);
+    if (torque_enable) {
+        // サーボのトルクをオンにする
+        for (const int dxl_id : this->dxl_ids)
+            setTorqueEnable(dxl_id, true);
+    }
 
 
     // パラメータを追加
@@ -107,6 +112,24 @@ void DXLHandler::shutdown() {
     portHandler->closePort();
 }
 
+void DXLHandler::setOperationMode(int dxl_idx, int mode) {
+    uint8_t dxl_error = 0;
+    int dxl_comm_result = COMM_TX_FAIL;
+
+    // Set the operation mode
+    dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, dxl_idx, ADDR_OPERATING_MODE, mode, &dxl_error);
+    printf("dxl_comm_result: %d\n", dxl_comm_result);
+    if (dxl_comm_result != COMM_SUCCESS) {
+        printf("Failed to set operating mode of Dynamixel ID: %d\n", dxl_idx);
+    }
+    else if (dxl_error != 0) {
+        printf("Error setting operating mode of Dynamixel ID: %d\n", dxl_idx);
+    }
+    else {
+        printf("Operating mode of Dynamixel ID: %d set to current control\n", dxl_idx);
+    }
+}
+
 void DXLHandler::addServo(int id, dxlType type /*= dxlType::XL330*/) {
     dxl_ids.push_back(id);
     dxl_types[id] = type;
@@ -137,8 +160,11 @@ void DXLHandler::setCurrents(map<int, double> currents) {
     for (auto dxl_id : dxl_ids) {
         bool dxl_addparam_result = COMM_TX_FAIL;
         uint8_t dxl_error = 0;
+        
+        //オーバーフロー対策
+        double current_cliped = clip(currents[dxl_id], -MAX_CURRENT[dxl_types[dxl_id]], MAX_CURRENT[dxl_types[dxl_id]]);
 
-        int16_t current = (int16_t)(currents[dxl_id] / UNIT_CURRENT[dxl_types[dxl_id]]);
+        int16_t current = (int16_t)(current_cliped / UNIT_CURRENT[dxl_types[dxl_id]]);
         param_goal_current[0] = DXL_LOBYTE(current);
         param_goal_current[1] = DXL_HIBYTE(current);
 

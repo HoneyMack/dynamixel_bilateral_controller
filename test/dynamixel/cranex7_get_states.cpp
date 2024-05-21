@@ -41,24 +41,6 @@ map<string, int> DXL_ID = {
     {"J8", 9}
 };
 
-
-int getch() {
-    struct termios oldt, newt;
-    int ch;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    ch = getchar();
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    return ch;
-}
-
-
-double clip(double value, double min, double max) {
-    return std::min(std::max(value, min), max);
-}
-
 int main() {
     DXLHandler dxlHandler(CRANEX7_DEVICENAME, 3000000);
 

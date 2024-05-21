@@ -5,11 +5,12 @@
 
 // 外乱オブザーバ
 class DOB {
-private:
+protected:
     double J, D;
     LowPassFilter filter;
 public:
     /// コンストラクタ
+    DOB(): J(0), D(0), filter(0, 0) {} //デフォルトコンストラクタ
     DOB(double J, double D, double f0, double T) : J(J), D(D), filter(f0, T) {}
 
     double step(double current, double omega) {
@@ -25,11 +26,12 @@ public:
 
 // 反力オブザーバ
 class RFOB {
-private:
+protected:
     double J, D;
     LowPassFilter filter;
 public:
     /// コンストラクタ
+    RFOB(): J(0), D(0), filter(0, 0) {} //デフォルトコンストラクタ
     RFOB(double J, double D, double f0, double T) : J(J), D(D), filter(f0, T) {}
 
     double step(double current, double omega, double tau_d) {

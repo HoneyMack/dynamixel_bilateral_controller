@@ -51,11 +51,6 @@ int getch() {
     return ch;
 }
 
-
-double clip(double value, double min, double max) {
-    return std::min(std::max(value, min), max);
-}
-
 int main() {
     DXLHandler dxlHandler(DEVICENAME, BAUDRATE);
     dxlHandler.addServo(DXL_ID_LEADER, DynamixelType::XL330);
@@ -129,11 +124,6 @@ int main() {
         // 力フィードバックを追加
         goal_currents[DXL_ID_LEADER] += -KT * (tau_r_f + tau_r_l) + tau_d_l - tau_r_l;
         goal_currents[DXL_ID_FOLLOWER] += -KT * (tau_r_l + tau_r_f) + tau_d_f - tau_r_f;
-
-        //オーバーフロー対策
-        goal_currents[DXL_ID_LEADER] = clip(goal_currents[DXL_ID_LEADER], -MAX_CURRENT, MAX_CURRENT);
-        goal_currents[DXL_ID_FOLLOWER] = clip(goal_currents[DXL_ID_FOLLOWER], -MAX_CURRENT, MAX_CURRENT);
-
 
         dxlHandler.setCurrents(goal_currents);
 

@@ -5,6 +5,7 @@
 #define DXL_CONST_HPP
 
 // Control table address
+#define ADDR_OPERATING_MODE         11
 #define ADDR_TORQUE_ENABLE          64
 #define ADDR_GOAL_CURRENT           102
 #define LEN_GOAL_CURRENT            2
@@ -23,8 +24,6 @@
 #define UNIT_VELOCITY               0.229 // [rev/min]
 #define UNIT_POSITION               0.088 // [deg/pulse]
 
-#define MAX_CURRENT                 1700.0 // [mA]
-
 
 // DYNAMIXEL Protocol Version (1.0 / 2.0)
 // https://emanual.robotis.com/docs/en/dxl/protocol2/
@@ -33,14 +32,23 @@
 
 enum class DynamixelType:int{
     XL330,
-    XM430
+    XM430,
+    XM550,
 };
 
 // 定数指定
 static std::map<DynamixelType,const double> UNIT_CURRENT= // [mA]
     {
         {DynamixelType::XL330, 1.0},
-        {DynamixelType::XM430, 2.69}
+        {DynamixelType::XM430, 2.69},
+        {DynamixelType::XM550, 2.69},
+    };
+
+static std::map<DynamixelType,const double> MAX_CURRENT= // [mA]
+    {
+        {DynamixelType::XL330, 1700},
+        {DynamixelType::XM430, 3200},
+        {DynamixelType::XM550, 5500},
     };
 
 #endif

@@ -13,6 +13,7 @@
 using namespace std;
 using dxlType = DynamixelType; // 名前が長いので省略して使用
 
+
 class DXLHandler
 {
     public:
@@ -21,8 +22,9 @@ class DXLHandler
         DXLHandler(const char* device_name, const int baudrate);
         ~DXLHandler();
 
-        void setup();
+        void setup(bool torque_enable = true);
         void shutdown();
+        void setOperationMode(int dxl_id, int mode);
         void addServo(int id, dxlType type);
         void setTorqueEnable(int id, bool enable);
         void setCurrents(map<int,double> currents);
