@@ -113,15 +113,29 @@ int main() {
         }
     }
 
-    leaderDxlHandler.setup(true, 0);
-    followerDxlHandler.setup(true, 0);
+    leaderDxlHandler.setup(false, 0);
+    followerDxlHandler.setup(false, 0);
+
+    //J3は位置制御で180度でロック
+    leaderDxlHandler.setOperationMode(4, 3);
+    followerDxlHandler.setOperationMode(4, 3);
+
+    //トルクオン
+    for (auto kv : DXL_TO_JOINT_ID) {
+        leaderDxlHandler.setTorqueEnable(kv.first, true);
+        followerDxlHandler.setTorqueEnable(kv.first, true);
+    }
+
+    //J3は位置制御で180度でロック
+    leaderDxlHandler.setPosition(4, 180);
+    followerDxlHandler.setPosition(4, 180);
 
     //疑似微分器
     // double T_control = 1.0 / 500;
     double T_control = 1.0 / 250;
     double cutoff_diff = 20; 
-    double cutoff_disturbance = 2.5;
-    double cutoff_reaction = 2.5;
+    double cutoff_disturbance = 1.5;
+    double cutoff_reaction = 1.5;
 
     //cranex7 observer のパラメータ
     // TODO: 要パラメータ調整
@@ -195,8 +209,16 @@ int main() {
     //     {7, 0.80},
     //     {8, 1.00},
     // };
-
-    map<int, double> Kts;
+    map<int, double> Kts = {
+        {1, 0.70},
+        {2, 0.70},
+    //     {3, 1.00},
+        {4, 0.70},
+        // {5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
+    //     {6, 1.00},
+    //     {7, 0.80},
+    //     {8, 1.00},
+    };
 
     //角度の単位変換に伴うパラメータの変換
     Js = convert_unit_rad_to_deg(Js);
