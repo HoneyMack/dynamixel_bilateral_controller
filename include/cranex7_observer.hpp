@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 #include "observers.hpp"
+#include "dxl_const.hpp"
 
 using namespace std;
 
@@ -19,7 +20,10 @@ protected:
     map<int, double> Ms;
     map<int, DOB> dobs;
     map<int, RFOB> rfobs;
+    map<int, double> before_positions;
+    map<int, int> move_directions; // 1: CW, -1: CCW, 0: stop
     LowPassFilter j2_tau_r_filter, j4_tau_r_filter;
+
 public:
     Cranex7Observer(map<int, double> Js, map<int, double> Ds, map<int, double> Ms, double f0, double T);
 

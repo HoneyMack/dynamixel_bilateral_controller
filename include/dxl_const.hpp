@@ -20,6 +20,8 @@
 #define MINIMUM_POSITION_LIMIT      0  // Refer to the Minimum Position Limit of product eManual
 #define MAXIMUM_POSITION_LIMIT      4095  // Refer to the Maximum Position Limit of product eManual
 
+#define BACKLASH_THREASHOLD        0.25 // [deg]
+
 
 #define UNIT_VELOCITY               0.229 // [rev/min]
 #define UNIT_POSITION               0.088 // [deg/pulse]
