@@ -32,9 +32,9 @@ map<int, double> Cranex7Observer::step_torque_react(map<int, double> currents, m
         }
         else if (kv.first == 4) {
             const double M3 = Ms[3];
-            const double rad4 = positions[4]/180 * M_PI ;
+            const double rad2 = positions[2]/180 * M_PI - M_PI, rad4 = positions[4]/180 * M_PI;
 
-            const double tau_d_known = j4_tau_r_filter.filter(Ds[kv.first] * velocities[kv.first] + M3 * sin(rad4));
+            const double tau_d_known = j4_tau_r_filter.filter(Ds[kv.first] * velocities[kv.first] + M3 * sin(rad2 + rad4));
             const double tau_r = tau_d[kv.first] - tau_d_known;
             tau_rs[kv.first] = tau_r;
         }
