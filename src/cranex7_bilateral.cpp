@@ -99,6 +99,22 @@ map<int, double> convert_unit_rad_to_deg(map<int, double> param_t) {
     return param_c;
 }
 
+bool clip_backlash(double &val, double backlash) {
+    //バックラッシュ分はクリップ．クリップしたらtrueを返す
+    if (val > backlash) {
+        val -= backlash;
+        return true;
+    }
+    else if (val < -backlash) {
+        val += backlash;
+        return true;
+    }
+    else {
+        val = 0;
+        return false;
+    }
+}
+
 int main() {
     DXLHandler leaderDxlHandler(LEADER_DEVICENAME, 3000000);
     DXLHandler followerDxlHandler(FOLLOWER_DEVICENAME, 3000000);
@@ -305,8 +321,20 @@ int main() {
 
             //目標電流を計算
             for (auto& kv : pos_l) {
-                torque_goal_l[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
-                torque_goal_f[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
+                const double backlash = 0.25 * 2 + 0.1;
+                double d_pos_fl = pos_f[kv.first] - pos_l[kv.first];
+                double d_vel_fl = vel_f[kv.first] - vel_l[kv.first];
+                bool cliped = clip_backlash(d_pos_fl, backlash);
+                if (cliped){
+                    // クリップされていたら角速度も0
+                    d_vel_fl = 0;
+                }
+
+                torque_goal_l[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * d_pos_fl + Js[kv.first] / 2 * Kds[kv.first] * d_vel_fl;
+                torque_goal_f[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * -d_pos_fl + Js[kv.first] / 2 * Kds[kv.first] * -d_vel_fl;
+
+                // torque_goal_l[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
+                // torque_goal_f[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
             }
 
             // 力フィードバックを追加
