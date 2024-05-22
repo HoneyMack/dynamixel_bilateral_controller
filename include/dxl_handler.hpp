@@ -35,6 +35,8 @@ class DXLHandler
         map<int,double> getPositions();
         map<int,double> getVelocities();
 
+        map<int,double> clipTorques(map<int,double> torques);
+
     private:
         const char* device_name;
         const int baudrate;

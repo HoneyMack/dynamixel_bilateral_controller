@@ -293,3 +293,12 @@ bool DXLHandler::checkError(int dxl_comm_result, uint8_t dxl_error, int id) {
         return false;
     }
 }
+
+map<int,double> DXLHandler::clipTorques(map<int,double> torques){
+    map<int,double> clipped_torques;
+    for(auto& kv:torques){
+        const double MAX_TORQUE = MAX_CURRENT[dxl_types[kv.first]] * AMPERE_TO_TORQUE[dxl_types[kv.first]];
+        clipped_torques[kv.first] = clip(kv.second,-MAX_TORQUE,MAX_TORQUE);
+    }
+    return clipped_torques;
+}
