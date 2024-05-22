@@ -321,7 +321,7 @@ int main() {
 
             //目標電流を計算
             for (auto& kv : pos_l) {
-                const double backlash = 0.25 * 2 + 0.1;
+                const double backlash = BACKLASH_THREASHOLD * 2 + 0.1; // [deg]
                 double d_pos_fl = pos_f[kv.first] - pos_l[kv.first];
                 double d_vel_fl = vel_f[kv.first] - vel_l[kv.first];
                 bool cliped = clip_backlash(d_pos_fl, backlash);
