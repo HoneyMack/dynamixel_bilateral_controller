@@ -151,8 +151,8 @@ int main() {
     // double T_control = 1.0 / 500;
     double T_control = 1.0 / 500;
     double cutoff_diff = 20;
-    double cutoff_disturbance = 1.0;
-    double cutoff_reaction = 1.0;
+    double cutoff_disturbance = 0.5;
+    double cutoff_reaction = 0.5;
 
     //cranex7 observer のパラメータ
     // TODO: 要パラメータ調整
@@ -232,8 +232,8 @@ int main() {
         //     {3, 1.00},
             {4, 1.00},
             //{5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
-            {6, 0.90},
-            // {7, 0.80},
+            {6, 0.80},
+            {7, 0.80},
             {8, 1.0},
     };
 
