@@ -37,11 +37,14 @@ map<int, double> Cranex7Observer::step_torque_disturb(map<int, double> currents,
                 }
             }
         }
-        double filt_velocity = move_directions[kv.first] * velocities[kv.first];
+        double filt_velocity = abs(move_directions[kv.first]) * velocities[kv.first];
         tau_ds[kv.first] = dobs[kv.first].step(currents[kv.first], filt_velocity);
 
+        // 動いているときは，角度を更新
+        if (move_directions[kv.first] != 0)
+            before_positions[kv.first] = positions[kv.first];
     }
-    before_positions = positions;
+    
 
     return tau_ds;
 }
@@ -49,7 +52,7 @@ map<int, double> Cranex7Observer::step_torque_disturb(map<int, double> currents,
 map<int, double> Cranex7Observer::step_torque_react(map<int, double> currents, map<int, double> positions, map<int, double> velocities, map<int, double> tau_d) {
     map<int, double> tau_rs;
     for (auto& kv : currents) {
-        double filt_velocity = move_directions[kv.first] * velocities[kv.first];
+        double filt_velocity = abs(move_directions[kv.first]) * velocities[kv.first];
         // J2とJ4は例外処理
         if (kv.first == 2) {
             const double M1 = Ms[1], M2 = Ms[2];
