@@ -44,26 +44,23 @@ set(my_dynamixel_SRC
   ${PROJECT_SOURCE_DIR}/src/cranex7_observer.cpp
 )
 
-set(my_dynamixel_HEADERS
-  ${PROJECT_SOURCE_DIR}/include/dxl_handler.hpp
-  ${PROJECT_SOURCE_DIR}/include/dxl_const.hpp
-  ${PROJECT_SOURCE_DIR}/include/filters.hpp
-  ${PROJECT_SOURCE_DIR}/include/observers.hpp
-  ${PROJECT_SOURCE_DIR}/include/cranex7_observer.hpp
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${dynamixelSDK_HEADERS}
+  ${Boost_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
+link_libraries(
+  ${dynamixelSDK_LIBS}
+  ${Boost_LIBRARIES}
+  ${OpenCV_LIBS}
+)
 
-add_executable(bilateral_pdt src/bilateral_pdt.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
-target_include_directories(bilateral_pdt PUBLIC include ${dynamixelSDK_HEADERS})
-target_link_libraries(bilateral_pdt ${dynamixelSDK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES})
+add_executable(bilateral_pdt src/bilateral_pdt.cpp ${my_dynamixel_SRC})
+add_executable(bilateral_pd src/bilateral_pd.cpp ${my_dynamixel_SRC} )
+add_executable(cranex7_bilateral src/cranex7_bilateral.cpp ${my_dynamixel_SRC})
 
-add_executable(bilateral_pd src/bilateral_pd.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
-target_include_directories(bilateral_pd PUBLIC include ${dynamixelSDK_HEADERS})
-target_link_libraries(bilateral_pd ${dynamixelSDK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES})
-
-add_executable(cranex7_bilateral src/cranex7_bilateral.cpp ${my_dynamixel_SRC} ${my_dynamixel_HEADERS})
-target_include_directories(cranex7_bilateral PUBLIC include ${dynamixelSDK_HEADERS})
-target_link_libraries(cranex7_bilateral ${dynamixelSDK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 
 # test用のプログラムのコンパイル
