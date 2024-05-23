@@ -99,7 +99,7 @@ map<int, double> convert_unit_rad_to_deg(map<int, double> param_t) {
     return param_c;
 }
 
-bool clip_backlash(double &val, double backlash) {
+bool clip_backlash(double& val, double backlash) {
     //バックラッシュ分はクリップ．クリップしたらtrueを返す
     if (val > backlash) {
         val -= backlash;
@@ -133,7 +133,7 @@ int main() {
     leaderDxlHandler.setup(false, 0);
     followerDxlHandler.setup(false, 0);
 
-    //J3は位置制御で180度でロック
+    //J3は位置制御：180度にロックして冗長自由度を消すため
     leaderDxlHandler.setOperationMode(4, 3);
     followerDxlHandler.setOperationMode(4, 3);
 
@@ -143,16 +143,14 @@ int main() {
         followerDxlHandler.setTorqueEnable(kv.first, true);
     }
 
-    //J3は位置制御で180度でロック
+    //J3を180度でロック：冗長自由度を消す
     leaderDxlHandler.setPosition(4, 180);
     followerDxlHandler.setPosition(4, 180);
 
-    //疑似微分器
-    // double T_control = 1.0 / 500;
-    double T_control = 1.0 / 500;
-    double cutoff_diff = 20;
-    double cutoff_disturbance = 0.5;
-    double cutoff_reaction = 0.5;
+
+    double T_control = 1.0 / 500;   //制御周期[s]
+    double cutoff_disturbance = 0.5;    //DOBのカットオフ周波数[Hz]
+    double cutoff_reaction = 0.5;       //RFOBのカットオフ周波数[Hz]
 
     //cranex7 observer のパラメータ
     // TODO: 要パラメータ調整
@@ -174,7 +172,7 @@ int main() {
         {5, 0.040},
         {6, 0.0391},
         {7, 0.0500},
-        {8, 0.0210/2}
+        {8, 0.0210 / 2}
     };
     map<int, double> Ms_lead = {
         {1, 2.094 / 4},
@@ -187,82 +185,61 @@ int main() {
         {2, 1.451 / 4},
         {3, 1.483 / 3},
     };
-    // //重力補償なし
-    // map<int, double> Ms_lead;
-    // map<int, double> Ms_follow;
 
     map<int, double> Kps = {
-        {1, 256.0*4},
-        {2, 196.0*4},
-        {3, 961.0*4},
-        {4, 144.0*4},
-        {5, 289.0*4},
-        {6, 324.0*4},
-        {7, 144.0*4},
-        {8, 324.0*6}
+        {1, 256.0 * 4},
+        {2, 196.0 * 4},
+        // {3, 961.0*4}, // J3は位置制御(固定のため制御しない)
+        {4, 144.0 * 4},
+        {5, 289.0 * 4},
+        {6, 324.0 * 4},
+        {7, 144.0 * 4},
+        {8, 324.0 * 6}
     };
 
     map<int, double> Kds = {
         {1, 40.0},
         {2, 28.0},
-        // {3, 66.0},
+        // {3, 66.0}, // J3は位置制御(固定のため制御しない)
         {4, 24.0},
-        {5, 34.0/2},
-        {6, 36.0/2},
+        {5, 34.0 / 2},
+        {6, 36.0 / 2},
         {7, 24.0},
-        {8, 36.0/2}
+        {8, 36.0 / 2}
     };
 
-    //Kds 0
-    // map<int, double> Kds;
-
-    // map<int, double> Kts = {
-    //     {1, 0.70},
-    //     {2, 0.70},
-    //     {3, 1.00},
-    //     {4, 1.00},
-    //     {5, 0.80},
-    //     {6, 1.00},
-    //     {7, 0.80},
-    //     {8, 1.00},
-    // };
     map<int, double> Kts = {
         {1, 1.00},
         {2, 1.00},
-        //     {3, 1.00},
-            {4, 1.00},
-            //{5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
-            {6, 0.95},
-            {7, 0.95},
-            {8, 1.0},
+        // {3, 1.00}, // J3は位置制御(固定のため制御しない)
+        {4, 1.00},
+        // {5, 0.80}, //ここをオンにするとバイラテ制御がうまくいかない
+        {6, 0.95},
+        {7, 0.95},
+        {8, 1.0},
     };
 
-    //角度の単位変換に伴うパラメータの変換
+    //角度の単位変換に伴うパラメータの変換: rad -> deg
     Js = convert_unit_rad_to_deg(Js);
     Ds = convert_unit_rad_to_deg(Ds);
 
 
-    // Kps = convert_unit_rad_to_deg(Kps);
-    // Kds = convert_unit_rad_to_deg(Kds);
-
-
-
-    // Kps -> Js*Kps, Kds -> Js*Kds
-
-
-    //オブザーバ:外乱・反力を計算
+    // オブザーバ:外乱・反力を計算
     Cranex7Observer cranex_obs_l(Js, Ds, Ms_lead, cutoff_disturbance, T_control);
     Cranex7Observer cranex_obs_f(Js, Ds, Ms_follow, cutoff_disturbance, T_control);
 
-    map<int, double> torque_goal_l, torque_goal_f;
-
+    // スレッド間処理同期用フラグ
     atomic<bool> finish_flag(false), start_get_l_state_flag(false), start_get_f_state_flag(false);
+    
+    // 目標トルク
+    map<int, double> torque_goal_l, torque_goal_f;
+    //速度・位置保持用
     map<int, double> vel_l, vel_f, pos_l, pos_f;
-    //実行時間計測
+
+    //実行時間計測用変数
     const int mean_data_num = 100;
-    chrono::system_clock::time_point time_start, time_end;
-    //分散計算用
     vector<double> elapsed_times(mean_data_num, 0.0);
+    chrono::system_clock::time_point time_start, time_end;
 
     time_start = chrono::system_clock::now();
     function<void()> get_l_state = [&]() {
@@ -325,16 +302,13 @@ int main() {
                 double d_pos_fl = pos_f[kv.first] - pos_l[kv.first];
                 double d_vel_fl = vel_f[kv.first] - vel_l[kv.first];
                 bool cliped = clip_backlash(d_pos_fl, backlash);
-                if (cliped){
+                if (cliped) {
                     // クリップされていたら角速度も0
                     d_vel_fl = 0;
                 }
 
                 torque_goal_l[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * d_pos_fl + Js[kv.first] / 2 * Kds[kv.first] * d_vel_fl;
                 torque_goal_f[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * -d_pos_fl + Js[kv.first] / 2 * Kds[kv.first] * -d_vel_fl;
-
-                // torque_goal_l[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_f[kv.first] - pos_l[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_f[kv.first] - vel_l[kv.first]);
-                // torque_goal_f[kv.first] = Js[kv.first] / 2 * Kps[kv.first] * (pos_l[kv.first] - pos_f[kv.first]) + Js[kv.first] / 2 * Kds[kv.first] * (vel_l[kv.first] - vel_f[kv.first]);
             }
 
             // 力フィードバックを追加
@@ -369,7 +343,7 @@ int main() {
                 interval_average /= mean_data_num;
                 interval_std = sqrt(interval_std / mean_data_num - interval_average * interval_average);
                 printf("interval: %5.3f +- %5.3f [ms]\n", interval_average, interval_std);
-                printf("freq: %5.3f +- %5.3f\n", 1000.0 / interval_average, 1000.0 * interval_std/(interval_average*interval_average));
+                printf("freq: %5.3f +- %5.3f\n", 1000.0 / interval_average, 1000.0 * interval_std / (interval_average * interval_average));
                 // 現在の状態を表示
                 //torque
                 printf("torque:\t");
@@ -393,10 +367,7 @@ int main() {
                 printf("\n\n\n");
                 counter = 0;
             }
-            // // 現在の状態を表示
-            // for (const auto& id : dxlHandler.dxl_ids) {
-            //     printf("ID: %d, Cur: %4f mA, Vel: %4f, Pos: %4f, tau_d:%4f, tau_r:%4f \n", id, goal_currents[id], velocities[id], positions[id], tau_d[id], tau_r[id]);
-            // }
+
             time_start = chrono::system_clock::now();
         }
         };
